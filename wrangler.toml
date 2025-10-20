@@ -1,0 +1,10 @@
+name                    = "lampa-plugins"
+pages_build_output_dir  = "plugins"
+compatibility_date      = "2025-09-17"
+
+# Placement: Default / Smart (Beta)
+[placement]
+mode = "off"
+
+# Telemetry opt-out example:
+send_metrics = true
