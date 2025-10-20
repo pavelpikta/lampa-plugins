@@ -9,6 +9,18 @@
     :root {
       color-scheme: light;
       font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      --accent-indigo: #6366f1;
+      --accent-blue: #3b82f6;
+      --accent-purple: #8b5cf6;
+      --accent-pink: #ec4899;
+      --accent-orange: #f97316;
+      --accent-cyan: #06b6d4;
+      --accent-lime: #84cc16;
+      --panel-bg: rgba(255, 255, 255, 0.82);
+      --panel-border: rgba(255, 255, 255, 0.38);
+      --text-primary: #0f172a;
+      --text-secondary: #4b5563;
+      --text-muted: #6b7280;
     }
 
     * {
@@ -21,150 +33,385 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      background: radial-gradient(circle at top, #eef2ff 0%, #f8fafc 45%, #e2e8f0 100%);
-      color: #0f172a;
-      padding: 2.5rem 1.5rem;
+      color: var(--text-primary);
+      padding: clamp(1.4rem, 3.6vw, 2.3rem) clamp(1.1rem, 4.4vw, 1.9rem);
+      background: linear-gradient(120deg, rgba(99, 102, 241, 0.35), rgba(14, 165, 233, 0.23), rgba(236, 72, 153, 0.3));
+      background-size: 200% 200%;
+      animation: background-pan 28s ease-in-out infinite;
+      position: relative;
+      overflow: hidden;
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: -35%;
+      background: radial-gradient(circle at 20% 20%, rgba(59, 130, 246, 0.18), transparent 55%),
+        radial-gradient(circle at 80% 30%, rgba(236, 72, 153, 0.18), transparent 60%),
+        radial-gradient(circle at 50% 80%, rgba(132, 204, 22, 0.12), transparent 55%);
+      filter: blur(60px);
+      opacity: 0.9;
+      pointer-events: none;
+      animation: glow-shift 36s linear infinite;
     }
 
     main {
-      width: min(720px, 100%);
-      background: rgba(255, 255, 255, 0.78);
-      backdrop-filter: blur(18px);
-      border-radius: 24px;
-      border: 1px solid rgba(148, 163, 184, 0.2);
-      box-shadow: 0 24px 60px -32px rgba(15, 23, 42, 0.4);
-      padding: 2.5rem 3rem;
+      width: min(820px, 100%);
+      background: var(--panel-bg);
+      backdrop-filter: blur(28px) saturate(145%);
+      border-radius: clamp(22px, 4vw, 28px);
+      border: 1px solid var(--panel-border);
+      box-shadow: 0 24px 65px -32px rgba(15, 23, 42, 0.5);
+      padding: clamp(1.6rem, 3.2vw, 2.4rem);
+      position: relative;
+      overflow: hidden;
+      max-height: calc(100vh - clamp(2.4rem, 6.5vw, 4.5rem));
+      display: flex;
+      flex-direction: column;
+    }
+
+    main::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      background: linear-gradient(135deg, rgba(99, 102, 241, 0.16), rgba(14, 165, 233, 0.12));
+      pointer-events: none;
+      opacity: 0.6;
+    }
+
+    .header-block {
+      flex: 0 0 auto;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      gap: 1.1rem;
     }
 
     .badge {
       display: inline-flex;
       align-items: center;
       gap: 0.45rem;
-      font-size: 0.9rem;
+      font-size: 0.82rem;
       font-weight: 600;
-      color: #1d4ed8;
-      background: rgba(59, 130, 246, 0.12);
-      border: 1px solid rgba(59, 130, 246, 0.25);
-      padding: 0.4rem 0.9rem;
+      color: #fff;
+      background: linear-gradient(120deg, var(--accent-indigo), var(--accent-blue));
+      padding: 0.38rem 0.95rem;
       border-radius: 999px;
       text-transform: uppercase;
-      letter-spacing: 0.05em;
+      letter-spacing: 0.12em;
+      box-shadow: 0 8px 16px -10px rgba(79, 70, 229, 0.65);
     }
 
-    h1 {
-      font-size: clamp(2rem, 4vw, 2.75rem);
-      margin: 1.5rem 0 1rem;
-      color: #0f172a;
-      letter-spacing: -0.01em;
+    .headline {
+      font-size: clamp(1.9rem, 4vw, 2.7rem);
+      font-weight: 700;
+      letter-spacing: -0.012em;
+      margin: 0;
+      color: rgba(15, 23, 42, 0.94);
+      max-width: 26ch;
     }
 
-    p {
-      margin: 0 0 2rem;
-      font-size: 1.05rem;
-      color: #334155;
-      max-width: 40ch;
+    .description-container {
+      position: relative;
+      background: linear-gradient(135deg, rgba(236, 242, 255, 0.92), rgba(240, 245, 255, 0.9));
+      border: 1px solid rgba(99, 102, 241, 0.16);
+      border-radius: 20px;
+      padding: clamp(1.15rem, 2.3vw, 1.65rem);
+      box-shadow: 0 18px 45px -36px rgba(79, 70, 229, 0.48);
+      display: grid;
+      gap: 0.85rem;
+      color: rgba(15, 23, 42, 0.88);
+      overflow: hidden;
+      max-width: 100%;
+    }
+
+    .description-container::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at 5% 0%, rgba(99, 102, 241, 0.25), transparent 55%),
+        radial-gradient(circle at 95% 10%, rgba(14, 165, 233, 0.22), transparent 50%),
+        radial-gradient(circle at 50% 100%, rgba(236, 72, 153, 0.16), transparent 65%);
+      opacity: 0.7;
+      pointer-events: none;
+    }
+
+    .description-container>* {
+      position: relative;
+      z-index: 1;
+    }
+
+    .description-container p {
+      margin: 0;
+      font-size: 1rem;
+      line-height: 1.58;
+      max-width: 70ch;
+    }
+
+    .description-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.4rem;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .description-tags li {
+      font-size: 0.78rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: rgba(79, 70, 229, 0.9);
+      background: rgba(79, 70, 229, 0.12);
+      border: 1px solid rgba(79, 70, 229, 0.18);
+      border-radius: 999px;
+      padding: 0.35rem 0.85rem;
+      font-weight: 600;
+      backdrop-filter: blur(6px);
     }
 
     .plugins-grid {
       display: grid;
-      gap: 1rem;
+      gap: 0.85rem;
+      overflow-y: auto;
+      padding-right: 0.3rem;
+      scrollbar-width: thin;
+      scrollbar-color: rgba(99, 102, 241, 0.35) transparent;
+      flex: 1 1 auto;
+      min-height: 0;
+      margin-top: 0.75rem;
+    }
+
+    .plugins-grid::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    .plugins-grid::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    .plugins-grid::-webkit-scrollbar-thumb {
+      background: linear-gradient(180deg, rgba(99, 102, 241, 0.34), rgba(59, 130, 246, 0.34));
+      border-radius: 999px;
     }
 
     .plugin-card {
+      --accent-start: var(--accent-indigo);
+      --accent-end: var(--accent-blue);
       display: flex;
-      align-items: center;
+      align-items: flex-start;
       justify-content: space-between;
-      padding: 1.1rem 1.3rem;
-      background: linear-gradient(135deg, rgba(248, 250, 252, 0.95), rgba(241, 245, 249, 0.9));
+      padding: 0.95rem 1.05rem;
+      background: rgba(248, 250, 252, 0.92);
       border-radius: 18px;
-      border: 1px solid rgba(148, 163, 184, 0.25);
+      border: 1px solid rgba(99, 102, 241, 0.14);
       text-decoration: none;
       color: inherit;
-      transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+      transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
       position: relative;
       overflow: hidden;
+      backdrop-filter: blur(14px) saturate(140%);
+      box-shadow: 0 16px 38px -28px rgba(15, 23, 42, 0.55);
+      gap: 0.85rem;
     }
 
     .plugin-card::after {
       content: "";
       position: absolute;
       inset: 0;
-      background: linear-gradient(135deg, rgba(59, 130, 246, 0.08), transparent 55%);
+      border-radius: inherit;
+      pointer-events: none;
       opacity: 0;
-      transition: opacity 0.2s ease;
+      transition: opacity 0.3s ease;
+      z-index: 0;
+    }
+
+    .plugin-card::after {
+      background: linear-gradient(150deg, rgba(255, 255, 255, 0.3), transparent 70%);
     }
 
     .plugin-meta {
-      font-size: 0.9rem;
-      color: #475569;
-      margin-top: 0.35rem;
+      font-size: 0.86rem;
+      color: var(--text-muted);
+      letter-spacing: -0.002em;
+      line-height: 1.45;
     }
 
     .plugin-card strong {
-      font-size: 1.05rem;
-      letter-spacing: -0.01em;
+      font-size: 0.98rem;
+      letter-spacing: -0.006em;
+      font-weight: 650;
       position: relative;
       z-index: 1;
     }
 
-    .plugin-card span {
+    .plugin-card-content {
+      display: flex;
+      flex-direction: column;
+      gap: 0.35rem;
       position: relative;
       z-index: 1;
     }
 
-    .plugin-arrow {
+    .plugin-actions {
+      display: inline-flex;
+      gap: 0.45rem;
+      align-items: center;
+      position: relative;
+      z-index: 1;
+      margin-left: auto;
+    }
+
+    .plugin-button {
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      border-radius: 50%;
-      width: 2.2rem;
-      height: 2.2rem;
-      background: rgba(59, 130, 246, 0.12);
-      color: #1d4ed8;
-      font-size: 1.1rem;
-      transition: transform 0.2s ease, background 0.2s ease, color 0.2s ease;
+      border-radius: 999px;
+      padding: 0.4rem 0.85rem;
+      font-size: 0.88rem;
+      font-weight: 600;
+      color: var(--accent-start);
+      background: rgba(99, 102, 241, 0.12);
+      border: 1px solid rgba(99, 102, 241, 0.16);
+      transition: transform 0.25s ease, background 0.25s ease, color 0.25s ease, box-shadow 0.25s ease;
+      text-decoration: none;
+      min-width: 2.6rem;
+      cursor: pointer;
+    }
+
+    .plugin-button.primary {
+      color: #e2e8f0;
+      background: linear-gradient(135deg, var(--accent-start), var(--accent-end));
+      border-color: transparent;
+      box-shadow: 0 12px 20px -16px rgba(59, 130, 246, 0.58);
+    }
+
+    .plugin-button .icon {
+      font-size: 1rem;
+    }
+
+    .plugin-button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 12px 24px -18px rgba(59, 130, 246, 0.55);
+    }
+
+    .plugin-button.secondary {
+      background: rgba(15, 23, 42, 0.05);
+      color: rgba(15, 23, 42, 0.75);
+      border-color: rgba(15, 23, 42, 0.08);
+    }
+
+    .plugin-button.secondary:hover {
+      background: rgba(15, 23, 42, 0.08);
+      color: rgba(15, 23, 42, 0.9);
+    }
+
+    .plugin-button.copied {
+      background: rgba(34, 197, 94, 0.18);
+      color: #15803d;
+      border-color: rgba(34, 197, 94, 0.3);
+      box-shadow: 0 10px 20px -16px rgba(34, 197, 94, 0.55);
     }
 
     .plugin-card:hover {
       transform: translateY(-4px);
-      box-shadow: 0 24px 45px -28px rgba(37, 99, 235, 0.45);
-      border-color: rgba(59, 130, 246, 0.45);
+      box-shadow: 0 22px 45px -28px rgba(30, 64, 175, 0.5);
+      border-color: rgba(99, 102, 241, 0.3);
     }
 
     .plugin-card:hover::after {
-      opacity: 1;
-    }
-
-    .plugin-card:hover .plugin-arrow {
-      transform: translateX(2px);
-      background: #1d4ed8;
-      color: #e2e8f0;
+      opacity: 0.9;
     }
 
     footer {
-      margin-top: 2.5rem;
+      margin-top: 1.4rem;
       font-size: 0.9rem;
       color: #64748b;
+      flex-shrink: 0;
+      font-weight: 600;
     }
 
     footer a {
-      color: #2563eb;
+      color: inherit;
       text-decoration: none;
-      font-weight: 600;
     }
 
     footer a:hover {
       text-decoration: underline;
     }
 
+    .plugin-card[aria-disabled="true"] {
+      cursor: default;
+      opacity: 0.85;
+    }
+
+    .plugins-grid[data-state="loading"] .plugin-card {
+      animation: pulse 1.6s ease-in-out infinite;
+      pointer-events: none;
+    }
+
+    .plugin-card:nth-of-type(6n + 1) {
+      --accent-start: var(--accent-indigo);
+      --accent-end: var(--accent-purple);
+    }
+
+    .plugin-card:nth-of-type(6n + 2) {
+      --accent-start: var(--accent-blue);
+      --accent-end: var(--accent-cyan);
+    }
+
+    .plugin-card:nth-of-type(6n + 3) {
+      --accent-start: var(--accent-pink);
+      --accent-end: var(--accent-purple);
+    }
+
+    .plugin-card:nth-of-type(6n + 4) {
+      --accent-start: var(--accent-orange);
+      --accent-end: var(--accent-pink);
+    }
+
+    .plugin-card:nth-of-type(6n + 5) {
+      --accent-start: var(--accent-cyan);
+      --accent-end: var(--accent-indigo);
+    }
+
+    .plugin-card:nth-of-type(6n) {
+      --accent-start: var(--accent-lime);
+      --accent-end: var(--accent-blue);
+    }
+
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
+
     @media (max-width: 640px) {
       body {
-        padding: 1.5rem;
+        padding: 1.2rem;
       }
 
       main {
-        border-radius: 18px;
-        padding: 2rem;
+        border-radius: 22px;
+        padding: 1.65rem;
+        max-height: calc(100vh - 2.4rem);
+      }
+
+      .description-container {
+        padding: 1.4rem;
+        gap: 0.85rem;
+      }
+
+      .description-tags {
+        gap: 0.35rem;
       }
 
       .plugin-card {
@@ -173,8 +420,48 @@
         gap: 0.9rem;
       }
 
-      .plugin-arrow {
+      .plugin-actions {
         align-self: flex-end;
+      }
+    }
+
+    @keyframes background-pan {
+      0% {
+        background-position: 0% 50%;
+      }
+
+      50% {
+        background-position: 100% 50%;
+      }
+
+      100% {
+        background-position: 0% 50%;
+      }
+    }
+
+    @keyframes glow-shift {
+      0% {
+        transform: rotate(0deg) scale(1);
+      }
+
+      50% {
+        transform: rotate(6deg) scale(1.08);
+      }
+
+      100% {
+        transform: rotate(0deg) scale(1);
+      }
+    }
+
+    @keyframes pulse {
+
+      0%,
+      100% {
+        opacity: 0.7;
+      }
+
+      50% {
+        opacity: 1;
       }
     }
   </style>
@@ -182,17 +469,33 @@
 
 <body>
   <main>
-    <span class="badge">Plugin catalog</span>
-    <h1>Lampa Plugins</h1>
-    <p>Discover script bundles optimized for Lampa deployments. Each link serves a ready-to-use JavaScript file from
-      Cloudflare Pages.</p>
+    <div class="header-block">
+      <div style="display: flex; justify-content: center;">
+        <span class="badge">Lampa Plugins Catalog</span>
+      </div>
+      <div class="description-container">
+        <p>Discover community-curated plugins to enhance your Lampa media center experience. Each plugin extends
+          functionality with new streaming sources, interface improvements, and customization options.</p>
+        <!-- <p>Deploy directly from Cloudflare Pages or copy a shareable link for your teams. Updates propagate instantly,
+          so your environment always reflects the latest improvements contributed by the community.</p> -->
+        <ul class="description-tags">
+          <li>Streaming Sources</li>
+          <li>Interface Tweaks</li>
+          <li>Automation</li>
+          <li>Security Tooling</li>
+          <li>Custom Themes</li>
+        </ul>
+      </div>
+    </div>
     <section class="plugins-grid" data-state="loading">
       <div class="plugin-card" aria-live="polite">
-        <div>
+        <div class="plugin-card-content">
           <strong>Loading catalog…</strong>
           <div class="plugin-meta">Fetching the latest plugin list</div>
         </div>
-        <span class="plugin-arrow">⌛</span>
+        <div class="plugin-actions">
+          <span class="plugin-button secondary" aria-hidden="true">⌛</span>
+        </div>
       </div>
     </section>
     <footer>
@@ -207,16 +510,15 @@
       const fallbackDescription = 'Cloudflare Pages hosted plugin bundle';
 
       function createCard(entry) {
-        const isLink = Boolean(entry.href);
-        const container = document.createElement(isLink ? 'a' : 'div');
+        const hasLink = Boolean(entry.href);
+        const container = document.createElement('div');
         container.className = 'plugin-card';
-        if (isLink) {
-          container.href = entry.href;
-        } else {
+        if (!hasLink) {
           container.setAttribute('aria-disabled', 'true');
         }
 
         const wrapper = document.createElement('div');
+        wrapper.className = 'plugin-card-content';
 
         const title = document.createElement('strong');
         title.textContent = entry.name || 'Untitled plugin';
@@ -228,12 +530,36 @@
         wrapper.appendChild(title);
         wrapper.appendChild(meta);
 
-        const arrow = document.createElement('span');
-        arrow.className = 'plugin-arrow';
-        arrow.textContent = isLink ? '→' : 'ℹ️';
+        const actions = document.createElement('div');
+        actions.className = 'plugin-actions';
+
+        if (hasLink) {
+          const openButton = document.createElement('a');
+          openButton.className = 'plugin-button primary';
+          openButton.href = entry.href;
+          openButton.innerHTML = '<span class="icon" aria-hidden="true">↗</span><span class="sr-only">Open plugin</span>';
+          actions.appendChild(openButton);
+
+          const copyButton = document.createElement('button');
+          copyButton.type = 'button';
+          copyButton.className = 'plugin-button secondary';
+          copyButton.innerHTML = '<span class="icon" aria-hidden="true">⧉</span><span class="sr-only">Copy link</span>';
+          copyButton.setAttribute('aria-label', 'Copy link to ' + (entry.name || 'plugin'));
+          copyButton.addEventListener('click', function (event) {
+            event.preventDefault();
+            event.stopPropagation();
+            copyPluginLink(entry.href, copyButton);
+          });
+          actions.appendChild(copyButton);
+        } else {
+          const infoBadge = document.createElement('span');
+          infoBadge.className = 'plugin-button secondary';
+          infoBadge.textContent = 'Info';
+          actions.appendChild(infoBadge);
+        }
 
         container.appendChild(wrapper);
-        container.appendChild(arrow);
+        container.appendChild(actions);
 
         return container;
       }
@@ -283,7 +609,7 @@
           const fragment = document.createDocumentFragment();
           plugins.forEach(function (plugin) {
             fragment.appendChild(createCard({
-              name: plugin.label || plugin.name,
+              name: plugin.name || plugin.label,
               href: plugin.href || plugin.url || ('/' + plugin.name),
               description: plugin.description || fallbackDescription
             }));
@@ -300,6 +626,50 @@
             description: 'Please refresh or check the network connection.'
           }));
         });
+
+      function copyPluginLink(url, button) {
+        if (!navigator.clipboard || typeof navigator.clipboard.writeText !== 'function') {
+          fallbackCopy(url, button);
+          return;
+        }
+
+        navigator.clipboard.writeText(new URL(url, window.location.href).href)
+          .then(function () {
+            flashCopiedState(button);
+          })
+          .catch(function () {
+            fallbackCopy(url, button);
+          });
+      }
+
+      function fallbackCopy(url, button) {
+        try {
+          const tempInput = document.createElement('textarea');
+          tempInput.value = new URL(url, window.location.href).href;
+          tempInput.setAttribute('readonly', '');
+          tempInput.style.position = 'fixed';
+          tempInput.style.top = '0';
+          tempInput.style.left = '-9999px';
+          document.body.appendChild(tempInput);
+          tempInput.focus({ preventScroll: true });
+          tempInput.select();
+          document.execCommand('copy');
+          flashCopiedState(button);
+          document.body.removeChild(tempInput);
+        } catch (error) {
+          console.warn('Copy to clipboard failed', error);
+        }
+      }
+
+      function flashCopiedState(button) {
+        const original = button.innerHTML;
+        button.innerHTML = '<span class="icon">✔</span>';
+        button.classList.add('copied');
+        setTimeout(function () {
+          button.innerHTML = original;
+          button.classList.remove('copied');
+        }, 1600);
+      }
     })();
   </script>
 </body>
