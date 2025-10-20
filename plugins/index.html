@@ -40,7 +40,7 @@
       background-size: 200% 200%;
       animation: background-pan 28s ease-in-out infinite;
       position: relative;
-      overflow: hidden;
+      overflow-x: hidden;
     }
 
     body::before {
@@ -65,10 +65,9 @@
       box-shadow: 0 24px 65px -32px rgba(15, 23, 42, 0.5);
       padding: clamp(1.6rem, 3.2vw, 2.4rem);
       position: relative;
-      overflow: hidden;
-      max-height: calc(100vh - clamp(2.4rem, 6.5vw, 4.5rem));
       display: flex;
       flex-direction: column;
+      overflow: visible;
     }
 
     main::after {
@@ -174,30 +173,17 @@
     }
 
     .plugins-grid {
-      display: grid;
+      display: flex;
+      flex-direction: column;
       gap: clamp(0.75rem, 1.5vw, 1.1rem);
-      overflow-y: auto;
-      padding-right: 0.3rem;
-      scrollbar-width: thin;
-      scrollbar-color: rgba(99, 102, 241, 0.35) transparent;
+      overflow: visible;
+      padding-right: 0;
       flex: 1 1 auto;
-      min-height: 0;
       margin-top: clamp(0.75rem, 1.6vw, 1.2rem);
-      grid-template-columns: repeat(auto-fit, minmax(min(260px, 100%), 1fr));
-      align-content: start;
     }
 
     .plugins-grid::-webkit-scrollbar {
       width: 6px;
-    }
-
-    .plugins-grid::-webkit-scrollbar-track {
-      background: transparent;
-    }
-
-    .plugins-grid::-webkit-scrollbar-thumb {
-      background: linear-gradient(180deg, rgba(99, 102, 241, 0.34), rgba(59, 130, 246, 0.34));
-      border-radius: 999px;
     }
 
     .plugin-card {
@@ -401,13 +387,17 @@
 
     @media (max-width: 640px) {
       body {
-        padding: 1.2rem;
+        display: block;
+        min-height: 100vh;
+        padding: 1.2rem 1rem 1.8rem;
       }
 
       main {
         border-radius: 22px;
         padding: 1.65rem;
-        max-height: calc(100vh - 2.4rem);
+        max-height: none;
+        height: auto;
+        width: 100%;
       }
 
       .description-container {
@@ -419,14 +409,31 @@
         gap: 0.35rem;
       }
 
+      .plugins-grid {
+        overflow: visible;
+        padding-right: 0;
+        margin-top: 1.1rem;
+      }
+
       .plugin-card {
         flex-direction: column;
-        align-items: flex-start;
+        align-items: stretch;
         gap: 0.9rem;
       }
 
       .plugin-actions {
-        align-self: flex-end;
+        align-self: stretch;
+        display: flex;
+        width: 100%;
+        justify-content: center;
+        gap: 0.65rem;
+        flex-wrap: wrap;
+      }
+
+      .plugin-actions .plugin-button {
+        flex: 1 1 100%;
+        justify-content: center;
+        min-width: 0;
       }
     }
 
