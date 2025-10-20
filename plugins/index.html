@@ -270,6 +270,8 @@
       text-decoration: none;
       min-width: 2.6rem;
       cursor: pointer;
+      position: relative;
+      overflow: hidden;
     }
 
     .plugin-button.primary {
@@ -299,11 +301,104 @@
       color: rgba(15, 23, 42, 0.9);
     }
 
-    .plugin-button.copied {
-      background: rgba(34, 197, 94, 0.18);
-      color: #15803d;
-      border-color: rgba(34, 197, 94, 0.3);
-      box-shadow: 0 10px 20px -16px rgba(34, 197, 94, 0.55);
+    .plugin-button.copy {
+      padding-inline: 1rem;
+      gap: 0.4rem;
+      color: rgba(15, 23, 42, 0.78);
+      background: rgba(15, 23, 42, 0.04);
+      border-color: rgba(15, 23, 42, 0.08);
+      transition: transform 0.25s ease, background 0.25s ease, color 0.25s ease, box-shadow 0.25s ease, opacity 0.25s ease;
+    }
+
+    .plugin-button.copy:hover {
+      background: rgba(15, 23, 42, 0.08);
+      color: rgba(15, 23, 42, 0.92);
+    }
+
+    .plugin-button.copy:disabled {
+      cursor: default;
+      opacity: 0.72;
+      pointer-events: none;
+    }
+
+    .plugin-button.copy::before {
+      content: "";
+      position: absolute;
+      inset: -1px;
+      border-radius: inherit;
+      background: linear-gradient(135deg, rgba(99, 102, 241, 0.28), rgba(14, 165, 233, 0.28));
+      opacity: 0;
+      transform: scale(0.85);
+      transition: opacity 0.3s ease, transform 0.3s ease;
+      z-index: 0;
+    }
+
+    .plugin-button.copy::after {
+      content: attr(data-feedback);
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.82rem;
+      font-weight: 650;
+      letter-spacing: 0.01em;
+      color: #f8fafc;
+      opacity: 0;
+      transform: translateY(45%);
+      transition: opacity 0.28s ease, transform 0.28s ease;
+      z-index: 2;
+      pointer-events: none;
+    }
+
+    .plugin-button.copy .copy-icon,
+    .plugin-button.copy .copy-label {
+      position: relative;
+      z-index: 3;
+      transition: transform 0.3s ease, opacity 0.3s ease;
+    }
+
+    .plugin-button.copy .copy-icon {
+      font-size: 1rem;
+    }
+
+    .plugin-button.copy.copied {
+      background: linear-gradient(135deg, var(--accent-start), var(--accent-end));
+      color: #f8fafc;
+      border-color: transparent;
+      transform: translateY(-2px) scale(1.01);
+      box-shadow: 0 16px 34px -22px rgba(79, 70, 229, 0.65);
+      animation: copy-pulse 0.9s ease;
+    }
+
+    .plugin-button.copy.copied::before {
+      opacity: 0.9;
+      transform: scale(1);
+    }
+
+    .plugin-button.copy.copied::after {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .plugin-button.copy.copied .copy-icon,
+    .plugin-button.copy.copied .copy-label {
+      opacity: 0;
+      transform: translateY(-12px);
+    }
+
+    @keyframes copy-pulse {
+      0% {
+        box-shadow: 0 0 0 0 rgba(99, 102, 241, 0.45);
+      }
+
+      70% {
+        box-shadow: 0 0 0 14px rgba(99, 102, 241, 0);
+      }
+
+      100% {
+        box-shadow: 0 0 0 0 rgba(99, 102, 241, 0);
+      }
     }
 
     .plugin-card:hover {
@@ -554,9 +649,25 @@
 
           const copyButton = document.createElement('button');
           copyButton.type = 'button';
-          copyButton.className = 'plugin-button secondary';
-          copyButton.innerHTML = '<span class="icon" aria-hidden="true">⧉</span><span class="sr-only">Copy link</span>';
-          copyButton.setAttribute('aria-label', 'Copy link to ' + (entry.name || 'plugin'));
+          copyButton.className = 'plugin-button secondary copy';
+          const srLabel = 'Copy link to ' + (entry.name || 'plugin');
+          copyButton.setAttribute('aria-label', srLabel);
+          copyButton.setAttribute('data-feedback', 'Copied!');
+
+          const iconSpan = document.createElement('span');
+          iconSpan.className = 'copy-icon';
+          iconSpan.setAttribute('aria-hidden', 'true');
+          iconSpan.textContent = '⧉';
+
+          const labelSpan = document.createElement('span');
+          labelSpan.className = 'copy-label';
+          labelSpan.textContent = 'Copy';
+
+          const srText = document.createElement('span');
+          srText.className = 'sr-only';
+          srText.textContent = srLabel;
+
+          copyButton.append(iconSpan, labelSpan, srText);
           copyButton.addEventListener('click', function (event) {
             event.preventDefault();
             event.stopPropagation();
@@ -674,12 +785,50 @@
       }
 
       function flashCopiedState(button) {
-        const original = button.innerHTML;
-        button.innerHTML = '<span class="icon">✔</span>';
+        const icon = button.querySelector('.copy-icon');
+        const label = button.querySelector('.copy-label');
+        const srOnly = button.querySelector('.sr-only');
+        const originalIcon = icon ? icon.textContent : null;
+        const originalLabel = label ? label.textContent : null;
+        const originalSr = srOnly ? srOnly.textContent : null;
+        const originalAriaLabel = button.getAttribute('aria-label');
+
         button.classList.add('copied');
+        button.disabled = true;
+
+        if (icon) {
+          icon.textContent = '✔';
+        }
+
+        if (label) {
+          label.textContent = 'Copied!';
+        }
+
+        if (srOnly) {
+          srOnly.textContent = 'Link copied to clipboard';
+        }
+
+        button.setAttribute('aria-label', 'Link copied to clipboard');
+
         setTimeout(function () {
-          button.innerHTML = original;
+          if (icon && originalIcon !== null) {
+            icon.textContent = originalIcon;
+          }
+
+          if (label && originalLabel !== null) {
+            label.textContent = originalLabel;
+          }
+
+          if (srOnly && originalSr !== null) {
+            srOnly.textContent = originalSr;
+          }
+
+          if (originalAriaLabel !== null) {
+            button.setAttribute('aria-label', originalAriaLabel);
+          }
+
           button.classList.remove('copied');
+          button.disabled = false;
         }, 1600);
       }
     })();
