@@ -17,19 +17,8 @@ const jsonHeaders = {
   'Cache-Control': 's-maxage=600, stale-while-revalidate=86400'
 };
 
-export default {
-  async fetch(request, env, ctx) {
-    const url = new URL(request.url);
-
-    if (url.pathname === '/api/plugins' || url.pathname === '/catalog.json') {
-      return handlePluginIndex(env, ctx);
-    }
-
-    return env.ASSETS.fetch(request);
-  }
-};
-
-async function handlePluginIndex(env, ctx) {
+export async function generateCatalogResponse(context) {
+  const { env } = context;
   const cacheKey = new Request('https://lampa-plugins.internal/api/plugins');
   const cache = caches.default;
 
@@ -87,8 +76,8 @@ async function handlePluginIndex(env, ctx) {
     headers: { ...jsonHeaders, 'X-Data-Source': dataSource }
   });
 
-  if (ctx && typeof ctx.waitUntil === 'function') {
-    ctx.waitUntil(cache.put(cacheKey, response.clone()));
+  if (typeof context.waitUntil === 'function') {
+    context.waitUntil(cache.put(cacheKey, response.clone()));
   }
 
   return response;
