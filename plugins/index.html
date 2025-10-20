@@ -186,47 +186,122 @@
     <h1>Lampa Plugins</h1>
     <p>Discover script bundles optimized for Lampa deployments. Each link serves a ready-to-use JavaScript file from
       Cloudflare Pages.</p>
-    <section class="plugins-grid">
-      <a class="plugin-card" href="/cubrip.js">
+    <section class="plugins-grid" data-state="loading">
+      <div class="plugin-card" aria-live="polite">
         <div>
-          <strong>cubrip.js</strong>
-          <div class="plugin-meta">Cubrip integration helpers</div>
+          <strong>Loading catalog…</strong>
+          <div class="plugin-meta">Fetching the latest plugin list</div>
         </div>
-        <span class="plugin-arrow">→</span>
-      </a>
-      <a class="plugin-card" href="/devsecops.js">
-        <div>
-          <strong>devsecops.js</strong>
-          <div class="plugin-meta">DevSecOps tooling presets</div>
-        </div>
-        <span class="plugin-arrow">→</span>
-      </a>
-      <a class="plugin-card" href="/notrailers.js">
-        <div>
-          <strong>notrailers.js</strong>
-          <div class="plugin-meta">Content filtering utilities</div>
-        </div>
-        <span class="plugin-arrow">→</span>
-      </a>
-      <a class="plugin-card" href="/parsers.js">
-        <div>
-          <strong>parsers.js</strong>
-          <div class="plugin-meta">Parser extensions for feeds</div>
-        </div>
-        <span class="plugin-arrow">→</span>
-      </a>
-      <a class="plugin-card" href="/themes.js">
-        <div>
-          <strong>themes.js</strong>
-          <div class="plugin-meta">Visual themes collection</div>
-        </div>
-        <span class="plugin-arrow">→</span>
-      </a>
+        <span class="plugin-arrow">⌛</span>
+      </div>
     </section>
     <footer>
       Maintain your plugin bundle in the <a href="https://github.com/pavelpikta/lampa-plugins">project repository</a>.
     </footer>
   </main>
+  <script>
+    (function () {
+      const grid = document.querySelector('.plugins-grid');
+      if (!grid) return;
+
+      const fallbackDescription = 'Cloudflare Pages hosted plugin bundle';
+
+      function createCard(entry) {
+        const isLink = Boolean(entry.href);
+        const container = document.createElement(isLink ? 'a' : 'div');
+        container.className = 'plugin-card';
+        if (isLink) {
+          container.href = entry.href;
+        } else {
+          container.setAttribute('aria-disabled', 'true');
+        }
+
+        const wrapper = document.createElement('div');
+
+        const title = document.createElement('strong');
+        title.textContent = entry.name || 'Untitled plugin';
+
+        const meta = document.createElement('div');
+        meta.className = 'plugin-meta';
+        meta.textContent = entry.description || fallbackDescription;
+
+        wrapper.appendChild(title);
+        wrapper.appendChild(meta);
+
+        const arrow = document.createElement('span');
+        arrow.className = 'plugin-arrow';
+        arrow.textContent = isLink ? '→' : 'ℹ️';
+
+        container.appendChild(wrapper);
+        container.appendChild(arrow);
+
+        return container;
+      }
+
+      const endpoints = [
+        { url: 'catalog.json', label: 'asset catalog' },
+        { url: '/api/plugins', label: 'worker api' }
+      ];
+
+      function fetchEndpoint(endpoint) {
+        return fetch(endpoint.url, { headers: { 'Accept': 'application/json' } })
+          .then(function (response) {
+            if (!response.ok) {
+              throw new Error('Failed to load plugin index (' + response.status + ')');
+            }
+            const contentType = response.headers.get('content-type') || '';
+            if (!contentType.includes('application/json')) {
+              throw new Error('Unexpected content type: ' + contentType);
+            }
+            return response.json();
+          });
+      }
+
+      async function loadCatalog() {
+        for (const endpoint of endpoints) {
+          try {
+            const payload = await fetchEndpoint(endpoint);
+            return payload;
+          } catch (error) {
+            console.warn('Catalog fetch failed via ' + endpoint.label, error);
+          }
+        }
+        return null;
+      }
+
+      loadCatalog()
+        .then(function (plugins) {
+          if (!Array.isArray(plugins) || plugins.length === 0) {
+            grid.setAttribute('data-state', 'empty');
+            grid.innerHTML = '';
+            grid.appendChild(createCard({
+              name: 'No plugins found',
+              description: 'The catalog appears to be empty.'
+            }));
+            return;
+          }
+          const fragment = document.createDocumentFragment();
+          plugins.forEach(function (plugin) {
+            fragment.appendChild(createCard({
+              name: plugin.label || plugin.name,
+              href: plugin.href || plugin.url || ('/' + plugin.name),
+              description: plugin.description || fallbackDescription
+            }));
+          });
+          grid.replaceChildren(fragment);
+          grid.setAttribute('data-state', 'ready');
+        })
+        .catch(function (error) {
+          console.warn('Dynamic plugin catalog update failed', error);
+          grid.setAttribute('data-state', 'error');
+          grid.innerHTML = '';
+          grid.appendChild(createCard({
+            name: 'Failed to load catalog',
+            description: 'Please refresh or check the network connection.'
+          }));
+        });
+    })();
+  </script>
 </body>
 
 </html>

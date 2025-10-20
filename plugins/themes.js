@@ -1,50 +1,50 @@
-(function() {
+(function () {
 
-'use strict';
+  'use strict';
 
-// ===== ЯЗЫКИ =====
-Lampa.Lang.add({
+  // ===== ЯЗЫКИ =====
+  Lampa.Lang.add({
     drxaos_themes: {
-        ru: 'DRXAOS Темы',
-        en: 'DRXAOS Themes',
-        uk: 'DRXAOS Теми'
+      ru: 'DRXAOS Темы',
+      en: 'DRXAOS Themes',
+      uk: 'DRXAOS Теми'
     },
     drxaos_theme: {
-        ru: 'Цветовая схема',
-        en: 'Color Scheme',
-        uk: 'Кольорова схема'
+      ru: 'Цветовая схема',
+      en: 'Color Scheme',
+      uk: 'Кольорова схема'
     },
     drxaos_animations: {
-        ru: 'Анимации',
-        en: 'Animations',
-        uk: 'Анімації'
+      ru: 'Анимации',
+      en: 'Animations',
+      uk: 'Анімації'
     },
     drxaos_glow: {
-        ru: 'Свечение',
-        en: 'Glow Effect',
-        uk: 'Світіння'
+      ru: 'Свечение',
+      en: 'Glow Effect',
+      uk: 'Світіння'
     },
     drxaos_fullbuttons: {
-        ru: 'Полные названия кнопок',
-        en: 'Full Button Labels',
-        uk: 'Повні назви кнопок'
+      ru: 'Полные названия кнопок',
+      en: 'Full Button Labels',
+      uk: 'Повні назви кнопок'
     },
     drxaos_transparency: {
-        ru: 'Прозрачность панелей',
-        en: 'Panel Transparency',
-        uk: 'Прозорість панелей'
+      ru: 'Прозрачность панелей',
+      en: 'Panel Transparency',
+      uk: 'Прозорість панелей'
     }
-});
+  });
 
-var prevtheme = '';
+  var prevtheme = '';
 
-// ===== ПРИМЕНЕНИЕ ТЕМЫ =====
-function applyTheme(theme) {
+  // ===== ПРИМЕНЕНИЕ ТЕМЫ =====
+  function applyTheme(theme) {
     $('#drxaos_theme_style').remove();
 
-    if (prevtheme !== '' && ((prevtheme === 'default' && theme !== 'default') || 
-        (prevtheme !== 'default' && theme === 'default'))) {
-        window.location.reload();
+    if (prevtheme !== '' && ((prevtheme === 'default' && theme !== 'default') ||
+      (prevtheme !== 'default' && theme === 'default'))) {
+      window.location.reload();
     }
 
     prevtheme = theme;
@@ -54,10 +54,10 @@ function applyTheme(theme) {
     var transparency = Lampa.Storage.get('drxaos_transparency', 85);
 
     var glowValues = {
-        'off': '0',
-        'low': '0.2em',
-        'medium': '0.4em',
-        'high': '0.6em'
+      'off': '0',
+      'low': '0.2em',
+      'medium': '0.4em',
+      'high': '0.6em'
     };
 
     var glowSize = glowValues[glow] || glowValues['medium'];
@@ -67,7 +67,7 @@ function applyTheme(theme) {
 
     var themes = {
 
-        cyberpunk: `
+      cyberpunk: `
 /* ============================================
    CYBERPUNK - Фиолетово-голубая киберпанк схема
    ============================================ */
@@ -122,13 +122,13 @@ html, body, .extensions {
 
 /* ХАМЕЛЕОН АНИМАЦИЯ ГРАНИЦ */
 @keyframes chameleonBorder {
-    0%, 100% { 
+    0%, 100% {
         border-image-source: linear-gradient(135deg, #8a2be2, #00bfff, #b300ff);
     }
-    33% { 
+    33% {
         border-image-source: linear-gradient(135deg, #00bfff, #b300ff, #8a2be2);
     }
-    66% { 
+    66% {
         border-image-source: linear-gradient(135deg, #b300ff, #8a2be2, #00bfff);
     }
 }
@@ -215,7 +215,7 @@ body .card.focus .card__img {
     border: 3px solid transparent !important;
     border-image: linear-gradient(135deg, #8a2be2, #00bfff, #b300ff, #8a2be2) 1 !important;
     animation: chameleonBorder 3s linear infinite !important;
-    box-shadow: 
+    box-shadow:
         0 0 ${glowSize} #00bfff,
         0 0 calc(${glowSize} * 1.5) #8a2be2,
         0 0 calc(${glowSize} * 2) rgba(138, 43, 226, 0.4) !important;
@@ -337,7 +337,7 @@ body .settings-folder:hover,
 }
 `,
 
-        matrix: `
+      matrix: `
 /* ============================================
    MATRIX - Зеленая матричная схема
    ============================================ */
@@ -385,13 +385,13 @@ html, body, .extensions {
 
 /* ХАМЕЛЕОН ГРАНИЦ */
 @keyframes chameleonBorderGreen {
-    0%, 100% { 
+    0%, 100% {
         border-image-source: linear-gradient(90deg, #00ff41, #00c832, #39ff14);
     }
-    33% { 
+    33% {
         border-image-source: linear-gradient(90deg, #00c832, #39ff14, #00ff41);
     }
-    66% { 
+    66% {
         border-image-source: linear-gradient(90deg, #39ff14, #00ff41, #00c832);
     }
 }
@@ -477,7 +477,7 @@ body .card.focus .card__img {
     border: 3px solid transparent !important;
     border-image: linear-gradient(135deg, #00ff41, #00c832, #39ff14, #00ff41) 1 !important;
     animation: chameleonBorderGreen 3s linear infinite !important;
-    box-shadow: 
+    box-shadow:
         0 0 ${glowSize} #00ff41,
         0 0 calc(${glowSize} * 1.5) #39ff14,
         0 0 calc(${glowSize} * 2) rgba(0, 255, 65, 0.4) !important;
@@ -586,7 +586,7 @@ body .settings-folder:hover,
 }
 `,
 
-        retrowave: `
+      retrowave: `
 /* ============================================
    RETRO WAVE - Розово-фиолетово-голубая схема 80-х
    ============================================ */
@@ -634,16 +634,16 @@ html, body, .extensions {
 
 /* ХАМЕЛЕОН */
 @keyframes chameleonBorderRetro {
-    0%, 100% { 
+    0%, 100% {
         border-image-source: linear-gradient(135deg, #f72585, #b300ff, #00ffff);
     }
-    25% { 
+    25% {
         border-image-source: linear-gradient(135deg, #b300ff, #00ffff, #f72585);
     }
-    50% { 
+    50% {
         border-image-source: linear-gradient(135deg, #00ffff, #f72585, #b300ff);
     }
-    75% { 
+    75% {
         border-image-source: linear-gradient(135deg, #f72585, #00ffff, #b300ff);
     }
 }
@@ -843,7 +843,7 @@ body .settings-folder:hover,
 }
 `,
 
-        iceblue: `
+      iceblue: `
 /* ============================================
    ICE BLUE - Холодная голубая схема
    ============================================ */
@@ -891,13 +891,13 @@ html, body, .extensions {
 
 /* ХАМЕЛЕОН */
 @keyframes chameleonBorderIce {
-    0%, 100% { 
+    0%, 100% {
         border-image-source: linear-gradient(90deg, #00d4ff, #00ffff, #4dd0e1);
     }
-    33% { 
+    33% {
         border-image-source: linear-gradient(90deg, #00ffff, #4dd0e1, #00d4ff);
     }
-    66% { 
+    66% {
         border-image-source: linear-gradient(90deg, #4dd0e1, #00d4ff, #00ffff);
     }
 }
@@ -1098,16 +1098,16 @@ body .settings-folder:hover,
 
     applyAnimations();
     applyFullButtons();
-}
+  }
 
-// ===== АНИМАЦИИ =====
-function applyAnimations() {
+  // ===== АНИМАЦИИ =====
+  function applyAnimations() {
     var animations = Lampa.Storage.get('drxaos_animations', true);
 
     $('#drxaos_animations_style').remove();
 
     if (animations) {
-        var animStyle = `
+      var animStyle = `
 <style id="drxaos_animations_style">
 .card, .menu__item, .button, .full-start__button, .head__action {
     transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) !important;
@@ -1137,18 +1137,18 @@ function applyAnimations() {
 }
 </style>
 `;
-        $('head').append(animStyle);
+      $('head').append(animStyle);
     }
-}
+  }
 
-// ===== ПОЛНЫЕ НАЗВАНИЯ КНОПОК =====
-function applyFullButtons() {
+  // ===== ПОЛНЫЕ НАЗВАНИЯ КНОПОК =====
+  function applyFullButtons() {
     var fullbuttons = Lampa.Storage.get('drxaos_fullbuttons', false);
 
     $('#drxaos_fullbuttons_style').remove();
 
     if (fullbuttons) {
-        var buttonStyle = `
+      var buttonStyle = `
 <style id="drxaos_fullbuttons_style">
 .full-start__button span {
     display: inline !important;
@@ -1181,9 +1181,9 @@ function applyFullButtons() {
 }
 </style>
 `;
-        $('head').append(buttonStyle);
+      $('head').append(buttonStyle);
     } else {
-        var buttonStyle = `
+      var buttonStyle = `
 <style id="drxaos_fullbuttons_style">
 .full-start__button:not(.focus):not(:hover) span {
     display: none !important;
@@ -1196,129 +1196,129 @@ function applyFullButtons() {
 }
 </style>
 `;
-        $('head').append(buttonStyle);
+      $('head').append(buttonStyle);
     }
-}
+  }
 
-// ===== НАСТРОЙКИ =====
-function addSettings() {
+  // ===== НАСТРОЙКИ =====
+  function addSettings() {
     Lampa.SettingsApi.addComponent({
-        component: 'drxaos_themes',
-        name: Lampa.Lang.translate('drxaos_themes'),
-        icon: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="currentColor" stroke-width="2"/><path d="M2 17L12 22L22 17" stroke="currentColor" stroke-width="2"/><path d="M2 12L12 17L22 12" stroke="currentColor" stroke-width="2"/></svg>'
+      component: 'drxaos_themes',
+      name: Lampa.Lang.translate('drxaos_themes'),
+      icon: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="currentColor" stroke-width="2"/><path d="M2 17L12 22L22 17" stroke="currentColor" stroke-width="2"/><path d="M2 12L12 17L22 12" stroke="currentColor" stroke-width="2"/></svg>'
     });
 
     Lampa.SettingsApi.addParam({
-        component: 'drxaos_themes',
-        param: {
-            name: 'drxaos_theme',
-            type: 'select',
-            values: {
-                'default': 'Стандартная',
-                'cyberpunk': '🔮 Cyberpunk',
-                'matrix': '💚 Matrix',
-                'retrowave': '🌈 Retro Wave',
-                'iceblue': '❄️ Ice Blue'
-            },
-            default: 'cyberpunk'
+      component: 'drxaos_themes',
+      param: {
+        name: 'drxaos_theme',
+        type: 'select',
+        values: {
+          'default': 'Стандартная',
+          'cyberpunk': '🔮 Cyberpunk',
+          'matrix': '💚 Matrix',
+          'retrowave': '🌈 Retro Wave',
+          'iceblue': '❄️ Ice Blue'
         },
-        field: {
-            name: Lampa.Lang.translate('drxaos_theme'),
-            description: 'Выберите цветовую схему интерфейса'
-        },
-        onChange: applyTheme
+        default: 'cyberpunk'
+      },
+      field: {
+        name: Lampa.Lang.translate('drxaos_theme'),
+        description: 'Выберите цветовую схему интерфейса'
+      },
+      onChange: applyTheme
     });
 
     Lampa.SettingsApi.addParam({
-        component: 'drxaos_themes',
-        param: {
-            name: 'drxaos_glow',
-            type: 'select',
-            values: {
-                'off': 'Выключено',
-                'low': 'Слабое',
-                'medium': 'Среднее',
-                'high': 'Сильное'
-            },
-            default: 'medium'
+      component: 'drxaos_themes',
+      param: {
+        name: 'drxaos_glow',
+        type: 'select',
+        values: {
+          'off': 'Выключено',
+          'low': 'Слабое',
+          'medium': 'Среднее',
+          'high': 'Сильное'
         },
-        field: {
-            name: Lampa.Lang.translate('drxaos_glow'),
-            description: 'Интенсивность свечения элементов'
-        },
-        onChange: function() {
-            var theme = Lampa.Storage.get('drxaos_theme', 'cyberpunk');
-            applyTheme(theme);
-        }
+        default: 'medium'
+      },
+      field: {
+        name: Lampa.Lang.translate('drxaos_glow'),
+        description: 'Интенсивность свечения элементов'
+      },
+      onChange: function () {
+        var theme = Lampa.Storage.get('drxaos_theme', 'cyberpunk');
+        applyTheme(theme);
+      }
     });
 
     Lampa.SettingsApi.addParam({
-        component: 'drxaos_themes',
-        param: {
-            name: 'drxaos_transparency',
-            type: 'select',
-            values: {
-                '60': '60%',
-                '70': '70%',
-                '80': '80%',
-                '85': '85%',
-                '90': '90%',
-                '95': '95%'
-            },
-            default: '85'
+      component: 'drxaos_themes',
+      param: {
+        name: 'drxaos_transparency',
+        type: 'select',
+        values: {
+          '60': '60%',
+          '70': '70%',
+          '80': '80%',
+          '85': '85%',
+          '90': '90%',
+          '95': '95%'
         },
-        field: {
-            name: Lampa.Lang.translate('drxaos_transparency'),
-            description: 'Прозрачность панелей (glassmorphism)'
-        },
-        onChange: function() {
-            var theme = Lampa.Storage.get('drxaos_theme', 'cyberpunk');
-            applyTheme(theme);
-        }
+        default: '85'
+      },
+      field: {
+        name: Lampa.Lang.translate('drxaos_transparency'),
+        description: 'Прозрачность панелей (glassmorphism)'
+      },
+      onChange: function () {
+        var theme = Lampa.Storage.get('drxaos_theme', 'cyberpunk');
+        applyTheme(theme);
+      }
     });
 
     Lampa.SettingsApi.addParam({
-        component: 'drxaos_themes',
-        param: {
-            name: 'drxaos_fullbuttons',
-            type: 'trigger',
-            default: false
-        },
-        field: {
-            name: Lampa.Lang.translate('drxaos_fullbuttons'),
-            description: 'Показывать полные названия кнопок "Онлайн", "Торренты", "Избранное"'
-        },
-        onChange: applyFullButtons
+      component: 'drxaos_themes',
+      param: {
+        name: 'drxaos_fullbuttons',
+        type: 'trigger',
+        default: false
+      },
+      field: {
+        name: Lampa.Lang.translate('drxaos_fullbuttons'),
+        description: 'Показывать полные названия кнопок "Онлайн", "Торренты", "Избранное"'
+      },
+      onChange: applyFullButtons
     });
 
     Lampa.SettingsApi.addParam({
-        component: 'drxaos_themes',
-        param: {
-            name: 'drxaos_animations',
-            type: 'trigger',
-            default: true
-        },
-        field: {
-            name: Lampa.Lang.translate('drxaos_animations'),
-            description: 'Плавные анимации при наведении'
-        },
-        onChange: applyAnimations
+      component: 'drxaos_themes',
+      param: {
+        name: 'drxaos_animations',
+        type: 'trigger',
+        default: true
+      },
+      field: {
+        name: Lampa.Lang.translate('drxaos_animations'),
+        description: 'Плавные анимации при наведении'
+      },
+      onChange: applyAnimations
     });
-}
+  }
 
-// ===== ЗАПУСК =====
-function startPlugin() {
+  // ===== ЗАПУСК =====
+  function startPlugin() {
     addSettings();
 
     var theme = Lampa.Storage.get('drxaos_theme', 'cyberpunk');
     applyTheme(theme);
-}
+  }
 
-if (window.appready) startPlugin();
-else {
-    Lampa.Listener.follow('app', function(e) {
-        if (e.type == 'ready') startPlugin();
+  if (window.appready) startPlugin();
+  else {
+    Lampa.Listener.follow('app', function (e) {
+      if (e.type == 'ready') startPlugin();
     });
-}
+  }
 
 })();

@@ -1,0 +1,26 @@
+[
+  {
+    "name": "cubrip.js",
+    "description": "Set cub_domain, cub_mirrors, websocket to cub.rip"
+  },
+  {
+    "name": "devsecops.js",
+    "description": "DevSecOps tooling presets (parsers, torrserver, screensaver, etc)"
+  },
+  {
+    "name": "interface_mod.js",
+    "description": "Interface tweaks and customization pack"
+  },
+  {
+    "name": "notrailers.js",
+    "description": "Disable trailers buttons and links"
+  },
+  {
+    "name": "parsers.js",
+    "description": "Parsers catalog"
+  },
+  {
+    "name": "themes.js",
+    "description": "Visual themes collection"
+  }
+]
