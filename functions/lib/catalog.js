@@ -8,7 +8,18 @@ const pluginDescriptions = {
   'interface_mod.js': 'Interface tweaks and customization pack',
   'notrailers.js': 'Content filtering utilities',
   'parsers.js': 'Parser extensions for feeds',
-  'themes.js': 'Visual themes collection'
+  'themes.js': 'Visual themes collection',
+  'tmdb.js': 'The Movie Database (TMDB) proxy support',
+};
+
+const pluginLabels = {
+  cubrip: 'Cubrip',
+  devsecops: 'DevSecOps',
+  interface_mod: 'Interface Mod',
+  notrailers: 'No Trailers',
+  parsers: 'Parsers Suite',
+  themes: 'Themes Pack',
+  tmdb: 'TMDB Proxy',
 };
 
 const defaultDescription = 'Cloudflare Pages hosted plugin bundle';
@@ -19,7 +30,8 @@ const jsonHeaders = {
 
 export async function generateCatalogResponse(context) {
   const { env } = context;
-  const cacheKey = new Request('https://lampa-plugins.internal/api/plugins');
+  const buildId = (env && env.CF_PAGES_COMMIT_SHA) || 'local-dev';
+  const cacheKey = new Request(`https://lampa-plugins.internal/api/plugins?build=${buildId}`);
   const cache = caches.default;
 
   const cached = await cache.match(cacheKey);
@@ -73,7 +85,7 @@ export async function generateCatalogResponse(context) {
   }
 
   const response = new Response(JSON.stringify(plugins), {
-    headers: { ...jsonHeaders, 'X-Data-Source': dataSource }
+    headers: { ...jsonHeaders, 'X-Data-Source': dataSource, 'X-Build-Id': buildId }
   });
 
   if (typeof context.waitUntil === 'function') {
@@ -90,13 +102,25 @@ function buildFallbackList() {
       name,
       label: formatLabel(name),
       href: `/${name}`,
-      description: pluginDescriptions[name]
+      description: pluginDescriptions[name],
     }));
 }
 
 function formatLabel(name) {
-  const base = name.replace(/\.js$/i, '').replace(/_/g, ' ');
+  const base = name.replace(/\.js$/i, '');
+  const baseKey = base.toLowerCase();
+  const compactKey = base.replace(/[\s_]/g, '').toLowerCase();
+
+  if (pluginLabels[baseKey]) {
+    return pluginLabels[baseKey];
+  }
+
+  if (pluginLabels[compactKey]) {
+    return pluginLabels[compactKey];
+  }
+
   return base
+    .replace(/_/g, ' ')
     .split(' ')
     .filter(Boolean)
     .map((segment) => segment.charAt(0).toUpperCase() + segment.slice(1))

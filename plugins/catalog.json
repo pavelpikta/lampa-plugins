@@ -22,5 +22,10 @@
   {
     "name": "themes.js",
     "description": "Visual themes collection"
+  },
+  {
+    "name": "tmdb.js",
+    "label": "TMDB Proxy",
+    "description": "TMDB plugin with proxy support"
   }
 ]
