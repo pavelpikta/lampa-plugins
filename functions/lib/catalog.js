@@ -1,33 +1,14 @@
-const GITHUB_CONTENT_API = 'https://api.github.com/repos/pavelpikta/lampa-plugins/contents/plugins';
+import fallbackCatalogSource from '../../plugins/catalog.json' assert { type: 'json' };
+
 const INTERNAL_ORIGIN = 'https://lampa-plugins.internal';
 const CATALOG_ASSET = '/catalog.json';
+const defaultDescription = 'Not provided';
+const defaultVersion = '1.0.0';
 
-const pluginDescriptions = {
-  'cubrip.js': 'Cubrip integration helpers',
-  'devsecops.js': 'DevSecOps tooling presets',
-  'etor.js': 'Enable torrents feature',
-  'interface_mod.js': 'Interface tweaks and customization pack',
-  'notrailers.js': 'Content filtering utilities',
-  'parsers.js': 'Parser extensions for feeds',
-  'themes.js': 'Visual themes collection',
-  'tmdb.js': 'The Movie Database (TMDB) proxy support',
-};
-
-const pluginLabels = {
-  cubrip: 'Cubrip',
-  devsecops: 'DevSecOps',
-  etor: 'Enable Torrents',
-  interface_mod: 'Interface Mod',
-  notrailers: 'No Trailers',
-  parsers: 'Parsers Suite',
-  themes: 'Themes Pack',
-  tmdb: 'TMDB Proxy',
-};
-
-const defaultDescription = 'Cloudflare Pages hosted plugin bundle';
+const fallbackCatalog = normalizeCatalog(fallbackCatalogSource);
 const jsonHeaders = {
   'Content-Type': 'application/json; charset=utf-8',
-  'Cache-Control': 's-maxage=600, stale-while-revalidate=86400'
+  'Cache-Control': 's-maxage=600, stale-while-revalidate=86400',
 };
 
 export async function generateCatalogResponse(context) {
@@ -41,53 +22,23 @@ export async function generateCatalogResponse(context) {
     return cached;
   }
 
-  let plugins = buildFallbackList();
+  const fallbackList = buildFallbackList();
+  let plugins = fallbackList;
   let dataSource = 'fallback';
 
   const assetCatalog = await loadCatalogFromAssets(env);
+  const merged = mergeCatalogSources({ fallbackList, assetCatalog });
+
+  if (merged.length) {
+    plugins = merged;
+  }
+
   if (assetCatalog && assetCatalog.length) {
-    plugins = assetCatalog;
-    dataSource = 'asset';
-  } else {
-    const token = env && env.GITHUB_TOKEN;
-
-    if (token) {
-      try {
-        const headers = {
-          'Accept': 'application/vnd.github+json',
-          'User-Agent': 'lampa-plugins-worker',
-          Authorization: `Bearer ${token}`
-        };
-
-        const response = await fetch(GITHUB_CONTENT_API, { headers });
-
-        if (response.ok) {
-          const contentType = response.headers.get('content-type') || '';
-          if (!contentType.includes('application/json')) {
-            throw new Error('GitHub API returned non-JSON payload');
-          }
-
-          const payload = await response.json();
-          plugins = payload
-            .filter((item) => item.type === 'file' && item.name.endsWith('.js'))
-            .map((item) => ({
-              name: item.name,
-              label: formatLabel(item.name),
-              href: `/${item.name}`,
-              description: pluginDescriptions[item.name] || defaultDescription,
-              size: item.size || null
-            }))
-            .sort((a, b) => a.name.localeCompare(b.name));
-          dataSource = 'github';
-        }
-      } catch (error) {
-        console.warn('Failed to load plugin catalog from GitHub', error);
-      }
-    }
+    dataSource = 'asset-catalog';
   }
 
   const response = new Response(JSON.stringify(plugins), {
-    headers: { ...jsonHeaders, 'X-Data-Source': dataSource, 'X-Build-Id': buildId }
+    headers: { ...jsonHeaders, 'X-Data-Source': dataSource, 'X-Build-Id': buildId },
   });
 
   if (typeof context.waitUntil === 'function') {
@@ -98,35 +49,23 @@ export async function generateCatalogResponse(context) {
 }
 
 function buildFallbackList() {
-  return Object.keys(pluginDescriptions)
-    .sort((a, b) => a.localeCompare(b))
-    .map((name) => ({
-      name,
-      label: formatLabel(name),
-      href: `/${name}`,
-      description: pluginDescriptions[name],
-    }));
+  return fallbackCatalog
+    .slice()
+    .sort((a, b) => a.name.localeCompare(b.name))
+    .map((item) => ({ ...item }));
 }
 
 function formatLabel(name) {
-  const base = name.replace(/\.js$/i, '');
-  const baseKey = base.toLowerCase();
-  const compactKey = base.replace(/[\s_]/g, '').toLowerCase();
-
-  if (pluginLabels[baseKey]) {
-    return pluginLabels[baseKey];
+  const fallback = getFallbackEntry(name);
+  if (fallback && fallback.label) {
+    return fallback.label;
   }
 
-  if (pluginLabels[compactKey]) {
-    return pluginLabels[compactKey];
-  }
+  return formatLabelFromName(name);
+}
 
-  return base
-    .replace(/_/g, ' ')
-    .split(' ')
-    .filter(Boolean)
-    .map((segment) => segment.charAt(0).toUpperCase() + segment.slice(1))
-    .join(' ');
+function getFallbackEntry(name) {
+  return fallbackCatalog.find((item) => item.name === name);
 }
 
 async function loadCatalogFromAssets(env) {
@@ -136,7 +75,7 @@ async function loadCatalogFromAssets(env) {
 
   try {
     const request = new Request(`${INTERNAL_ORIGIN}${CATALOG_ASSET}`, {
-      headers: { Accept: 'application/json' }
+      headers: { Accept: 'application/json' },
     });
     const response = await env.ASSETS.fetch(request);
 
@@ -157,16 +96,114 @@ async function loadCatalogFromAssets(env) {
 
     return payload
       .filter((item) => item && typeof item.name === 'string' && item.name.endsWith('.js'))
-      .map((item) => ({
-        name: item.name,
-        label: item.label || formatLabel(item.name),
-        href: item.href || `/${item.name}`,
-        description: item.description || pluginDescriptions[item.name] || defaultDescription,
-        size: typeof item.size === 'number' ? item.size : null
-      }))
+      .map((item) => {
+        const fallback = getFallbackEntry(item.name);
+
+        return {
+          name: item.name,
+          label: item.label || (fallback && fallback.label) || formatLabel(item.name),
+          href: item.href || (fallback && fallback.href) || `/${item.name}`,
+          description: item.description || (fallback && fallback.description) || defaultDescription,
+          version:
+            typeof item.version === 'string'
+              ? item.version
+              : (fallback && fallback.version) || defaultVersion,
+        };
+      })
       .sort((a, b) => a.name.localeCompare(b.name));
   } catch (error) {
     console.warn('Failed to load plugin catalog asset', error);
     return null;
   }
+}
+
+function normalizeCatalog(items) {
+  if (!Array.isArray(items)) {
+    return [];
+  }
+
+  return items
+    .map(normalizeEntry)
+    .filter(Boolean)
+    .sort((a, b) => a.name.localeCompare(b.name));
+}
+
+function mergeCatalogSources({ fallbackList = [], assetCatalog = [] }) {
+  const catalogMap = new Map();
+
+  const upsert = (entry) => {
+    const normalized = normalizeEntry(entry);
+    if (!normalized) {
+      return;
+    }
+
+    const existing = catalogMap.get(normalized.name);
+    if (existing) {
+      catalogMap.set(normalized.name, { ...existing, ...normalized });
+    } else {
+      catalogMap.set(normalized.name, normalized);
+    }
+  };
+
+  fallbackList.forEach(upsert);
+  if (Array.isArray(assetCatalog)) {
+    assetCatalog.forEach(upsert);
+  }
+
+  return Array.from(catalogMap.values()).sort((a, b) => a.name.localeCompare(b.name));
+}
+
+function normalizeEntry(item) {
+  if (!item || typeof item.name !== 'string') {
+    return null;
+  }
+
+  const name = item.name.trim();
+  if (!name) {
+    return null;
+  }
+
+  if (!isAllowedPluginName(name)) {
+    return null;
+  }
+
+  return {
+    name,
+    label:
+      typeof item.label === 'string' && item.label.trim() ? item.label : formatLabelFromName(name),
+    href: typeof item.href === 'string' && item.href.trim() ? item.href : `/${name}`,
+    description:
+      typeof item.description === 'string' && item.description.trim()
+        ? item.description
+        : defaultDescription,
+    version:
+      typeof item.version === 'string' && item.version.trim() ? item.version : defaultVersion,
+  };
+}
+
+function isAllowedPluginName(name) {
+  if (name.endsWith('.js')) {
+    return true;
+  }
+
+  if (!name.includes('.')) {
+    return true;
+  }
+
+  if (name.includes('/')) {
+    const lastSegment = name.split('/').pop();
+    return lastSegment ? !lastSegment.includes('.') : false;
+  }
+
+  return false;
+}
+
+function formatLabelFromName(name) {
+  const base = name.replace(/\.js$/i, '');
+  return base
+    .replace(/_/g, ' ')
+    .split(' ')
+    .filter(Boolean)
+    .map((segment) => segment.charAt(0).toUpperCase() + segment.slice(1))
+    .join(' ');
 }
