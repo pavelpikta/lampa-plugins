@@ -1,36 +1,58 @@
 [
   {
     "name": "cubrip.js",
-    "description": "Set cub_domain, cub_mirrors, websocket to cub.rip"
+    "label": "Cubrip",
+    "description": "Set cub_domain, cub_mirrors, websocket to cub.rip",
+    "href": "/cubrip.js",
+    "version": "1.0.0"
   },
   {
     "name": "devsecops.js",
-    "description": "DevSecOps tooling presets (parsers, torrserver, screensaver, etc)"
+    "label": "DevSecOps",
+    "description": "DevSecOps tooling presets (parsers, torrserver, screensaver, etc)",
+    "href": "/devsecops.js",
+    "version": "1.0.0"
   },
   {
     "name": "etor.js",
     "label": "Enable Torrents",
-    "description": "Enable torrents feature"
+    "description": "Enable torrents feature",
+    "href": "/etor.js",
+    "version": "1.0.0"
   },
   {
     "name": "interface_mod.js",
-    "description": "Interface tweaks and customization pack"
+    "label": "Interface Mod",
+    "description": "Interface tweaks and customization pack",
+    "href": "/interface_mod.js",
+    "version": "1.0.0"
   },
   {
     "name": "notrailers.js",
-    "description": "Disable trailers buttons and links"
+    "label": "No Trailers",
+    "description": "Disable trailers buttons and links",
+    "href": "/notrailers.js",
+    "version": "1.0.0"
   },
   {
     "name": "parsers.js",
-    "description": "Parsers catalog"
+    "label": "Parsers Suite",
+    "description": "Parsers catalog",
+    "href": "/parsers.js",
+    "version": "1.0.0"
   },
   {
     "name": "themes.js",
-    "description": "Visual themes collection"
+    "label": "Themes Pack",
+    "description": "Visual themes collection",
+    "href": "/themes.js",
+    "version": "1.0.0"
   },
   {
     "name": "tmdb.js",
     "label": "TMDB Proxy",
-    "description": "TMDB plugin with proxy support"
+    "description": "TMDB plugin with proxy support",
+    "href": "/tmdb.js",
+    "version": "1.0.0"
   }
 ]

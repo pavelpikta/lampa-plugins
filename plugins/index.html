@@ -615,7 +615,52 @@
       const grid = document.querySelector('.plugins-grid');
       if (!grid) return;
 
-      const fallbackDescription = 'Cloudflare Pages hosted plugin bundle';
+      const fallbackDescription = 'Not provided';
+      const fallbackVersion = '1.0.0';
+
+      function formatLabelFromName(name) {
+        return name
+          .replace(/\.js$/i, '')
+          .replace(/[_\-]+/g, ' ')
+          .split(' ')
+          .filter(Boolean)
+          .map(function (segment) {
+            return segment.charAt(0).toUpperCase() + segment.slice(1);
+          })
+          .join(' ');
+      }
+
+      function normalizePluginEntry(entry) {
+        if (!entry || typeof entry.name !== 'string') {
+          return null;
+        }
+
+        const name = entry.name.trim();
+        if (!name) {
+          return null;
+        }
+
+        const label = entry.label && entry.label.trim() ? entry.label : formatLabelFromName(name);
+        const href = entry.href && entry.href.trim()
+          ? entry.href
+          : entry.url && entry.url.trim()
+            ? entry.url
+            : '/' + name;
+        const description = entry.description && entry.description.trim()
+          ? entry.description
+          : fallbackDescription;
+        const version = entry.version && entry.version.trim()
+          ? entry.version
+          : fallbackVersion;
+
+        return {
+          name,
+          label,
+          href,
+          description,
+          version
+        };
+      }
 
       function createCard(entry) {
         const hasLink = Boolean(entry.href);
@@ -629,11 +674,22 @@
         wrapper.className = 'plugin-card-content';
 
         const title = document.createElement('strong');
-        title.textContent = entry.name || 'Untitled plugin';
+        const displayName = entry.label || entry.name || 'Untitled plugin';
+        title.textContent = displayName;
 
         const meta = document.createElement('div');
         meta.className = 'plugin-meta';
-        meta.textContent = entry.description || fallbackDescription;
+        const metaParts = [];
+        if (entry.name) {
+          metaParts.push(entry.name);
+        }
+        if (entry.description) {
+          metaParts.push(entry.description);
+        }
+        if (entry.version) {
+          metaParts.push('v' + entry.version);
+        }
+        meta.textContent = metaParts.join(' • ') || fallbackDescription;
 
         wrapper.appendChild(title);
         wrapper.appendChild(meta);
@@ -651,7 +707,7 @@
           const copyButton = document.createElement('button');
           copyButton.type = 'button';
           copyButton.className = 'plugin-button secondary copy';
-          const srLabel = 'Copy link to ' + (entry.name || 'plugin');
+          const srLabel = 'Copy link to ' + displayName;
           copyButton.setAttribute('aria-label', srLabel);
           copyButton.setAttribute('data-feedback', 'Copied!');
 
@@ -689,8 +745,8 @@
       }
 
       const endpoints = [
-        { url: 'catalog.json', label: 'asset catalog' },
-        { url: '/api/plugins', label: 'worker api' }
+        { url: '/api/static', label: 'static catalog api' },
+        { url: '/api/dynamic', label: 'dynamic catalog api' }
       ];
 
       function fetchEndpoint(endpoint) {
@@ -707,16 +763,52 @@
           });
       }
 
-      async function loadCatalog() {
-        for (const endpoint of endpoints) {
-          try {
-            const payload = await fetchEndpoint(endpoint);
-            return payload;
-          } catch (error) {
-            console.warn('Catalog fetch failed via ' + endpoint.label, error);
+      function mergePluginLists(sourceLists) {
+        const merged = new Map();
+
+        sourceLists.forEach(function (list) {
+          if (!Array.isArray(list)) {
+            return;
           }
+
+          list.forEach(function (item) {
+            const normalized = normalizePluginEntry(item);
+            if (!normalized) {
+              return;
+            }
+
+            const existing = merged.get(normalized.name);
+            if (existing) {
+              merged.set(normalized.name, Object.assign({}, existing, normalized));
+            } else {
+              merged.set(normalized.name, normalized);
+            }
+          });
+        });
+
+        return Array.from(merged.values()).sort(function (a, b) {
+          return a.name.localeCompare(b.name);
+        });
+      }
+
+      async function loadCatalog() {
+        const results = await Promise.all(endpoints.map(function (endpoint) {
+          return fetchEndpoint(endpoint).catch(function (error) {
+            console.warn('Catalog fetch failed via ' + endpoint.label, error);
+            return null;
+          });
+        }));
+
+        const merged = mergePluginLists(results);
+        const succeeded = results.some(function (value) {
+          return Array.isArray(value);
+        });
+
+        if (!succeeded) {
+          throw new Error('All catalog endpoints failed');
         }
-        return null;
+
+        return merged;
       }
 
       loadCatalog()
@@ -732,11 +824,7 @@
           }
           const fragment = document.createDocumentFragment();
           plugins.forEach(function (plugin) {
-            fragment.appendChild(createCard({
-              name: plugin.name || plugin.label,
-              href: plugin.href || plugin.url || ('/' + plugin.name),
-              description: plugin.description || fallbackDescription
-            }));
+            fragment.appendChild(createCard(plugin));
           });
           grid.replaceChildren(fragment);
           grid.setAttribute('data-state', 'ready');
