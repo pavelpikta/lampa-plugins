@@ -150,6 +150,59 @@
       max-width: 70ch;
     }
 
+    .tab-container {
+      width: 100%;
+      margin-top: 1.1rem;
+      display: flex;
+      justify-content: center;
+    }
+
+    .tab-nav {
+      display: inline-flex;
+      gap: 0.5rem;
+      padding: 0.35rem;
+      border-radius: 999px;
+      border: 1px solid rgba(99, 102, 241, 0.18);
+      background: rgba(255, 255, 255, 0.55);
+      backdrop-filter: blur(14px) saturate(140%);
+      box-shadow: 0 16px 36px -26px rgba(15, 23, 42, 0.5);
+      overflow-x: auto;
+      max-width: 100%;
+    }
+
+    .tab-button {
+      border: none;
+      background: transparent;
+      color: rgba(15, 23, 42, 0.68);
+      font-weight: 600;
+      font-size: 0.9rem;
+      padding: 0.45rem 1rem;
+      border-radius: 999px;
+      cursor: pointer;
+      transition: background 0.25s ease, color 0.25s ease, transform 0.25s ease, box-shadow 0.25s ease;
+      position: relative;
+      white-space: nowrap;
+    }
+
+    .tab-button:hover:not(.active),
+    .tab-button:focus-visible:not(.active) {
+      background: rgba(99, 102, 241, 0.12);
+      color: rgba(79, 70, 229, 0.9);
+      outline: none;
+      transform: translateY(-1px);
+    }
+
+    .tab-button.active {
+      background: linear-gradient(135deg, var(--accent-indigo), var(--accent-blue));
+      color: #f8fafc;
+      box-shadow: 0 16px 28px -22px rgba(79, 70, 229, 0.6);
+    }
+
+    .tab-button:focus-visible {
+      outline: none;
+      box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.35);
+    }
+
     .description-tags {
       display: flex;
       flex-wrap: wrap;
@@ -504,6 +557,21 @@
         gap: 0.35rem;
       }
 
+      .tab-container {
+        margin-top: 0.9rem;
+        justify-content: flex-start;
+      }
+
+      .tab-nav {
+        width: 100%;
+        justify-content: flex-start;
+      }
+
+      .tab-button {
+        flex: 1 1 auto;
+        text-align: center;
+      }
+
       .plugins-grid {
         overflow: visible;
         padding-right: 0;
@@ -594,6 +662,9 @@
           <li>Custom Themes</li>
         </ul> -->
       </div>
+      <div class="tab-container" hidden>
+        <div class="tab-nav" role="tablist" aria-label="Plugin groups"></div>
+      </div>
     </div>
     <section class="plugins-grid" data-state="loading">
       <div class="plugin-card" aria-live="polite">
@@ -615,6 +686,15 @@
       const grid = document.querySelector('.plugins-grid');
       if (!grid) return;
 
+      const tabContainer = document.querySelector('.tab-container');
+      const tabNav = document.querySelector('.tab-nav');
+
+      const state = {
+        groups: [],
+        groupMap: new Map(),
+        activeKey: null,
+      };
+
       const fallbackDescription = 'Not provided';
       const fallbackVersion = '1.0.0';
 
@@ -628,6 +708,31 @@
             return segment.charAt(0).toUpperCase() + segment.slice(1);
           })
           .join(' ');
+      }
+
+      function formatGroupLabel(value) {
+        return value
+          .replace(/[_\-]+/g, ' ')
+          .split(' ')
+          .filter(Boolean)
+          .map(function (segment) {
+            return segment.charAt(0).toUpperCase() + segment.slice(1);
+          })
+          .join(' ');
+      }
+
+      function extractFolderName(name) {
+        if (typeof name !== 'string') return null;
+        const parts = name.split('/');
+        return parts.length > 1 ? parts[0] : null;
+      }
+
+      function sortPlugins(list) {
+        return list
+          .slice()
+          .sort(function (a, b) {
+            return a.name.localeCompare(b.name);
+          });
       }
 
       function normalizePluginEntry(entry) {
@@ -660,6 +765,145 @@
           description,
           version
         };
+      }
+
+      function createPluginGroups(plugins) {
+        const folders = new Map();
+        const standalone = [];
+
+        plugins.forEach(function (plugin) {
+          const folder = extractFolderName(plugin.name);
+          if (!folder) {
+            standalone.push(plugin);
+            return;
+          }
+
+          if (!folders.has(folder)) {
+            folders.set(folder, []);
+          }
+
+          folders.get(folder).push(plugin);
+        });
+
+        const ordered = [];
+        const groupMap = new Map();
+
+        function registerGroup(key, label, items) {
+          const group = {
+            key,
+            label,
+            plugins: sortPlugins(items),
+          };
+
+          ordered.push(group);
+          groupMap.set(key, group);
+        }
+
+        registerGroup('all', 'All Plugins', plugins);
+
+        if (standalone.length) {
+          registerGroup('standalone', 'Standalone', standalone);
+        }
+
+        Array.from(folders.keys())
+          .sort(function (a, b) {
+            return a.localeCompare(b);
+          })
+          .forEach(function (folder) {
+            registerGroup(folder, formatGroupLabel(folder), folders.get(folder));
+          });
+
+        return { groups: ordered, map: groupMap };
+      }
+
+      function renderTabs(groups) {
+        if (!tabContainer || !tabNav) {
+          return;
+        }
+
+        tabNav.innerHTML = '';
+
+        if (!groups || groups.length <= 1) {
+          tabContainer.setAttribute('hidden', 'true');
+          return;
+        }
+
+        tabContainer.removeAttribute('hidden');
+
+        groups.forEach(function (group, index) {
+          const button = document.createElement('button');
+          button.type = 'button';
+          button.className = 'tab-button';
+          button.dataset.tab = group.key;
+          button.textContent = group.label;
+          button.setAttribute('role', 'tab');
+
+          if (index === 0) {
+            button.classList.add('active');
+            button.setAttribute('aria-selected', 'true');
+          } else {
+            button.setAttribute('aria-selected', 'false');
+            button.tabIndex = -1;
+          }
+
+          button.addEventListener('click', function () {
+            activateGroup(group.key);
+          });
+
+          tabNav.appendChild(button);
+        });
+      }
+
+      function updateTabSelection(activeKey) {
+        if (!tabNav) {
+          return;
+        }
+
+        const buttons = tabNav.querySelectorAll('.tab-button');
+        buttons.forEach(function (button) {
+          const isActive = button.dataset.tab === activeKey;
+          button.classList.toggle('active', isActive);
+          button.setAttribute('aria-selected', isActive ? 'true' : 'false');
+          if (isActive) {
+            button.removeAttribute('tabindex');
+          } else {
+            button.setAttribute('tabindex', '-1');
+          }
+        });
+      }
+
+      function renderPluginList(list) {
+        if (!Array.isArray(list) || list.length === 0) {
+          grid.setAttribute('data-state', 'empty');
+          grid.replaceChildren(
+            createCard({
+              name: 'No plugins found',
+              description: 'Nothing is registered in this category yet.',
+            })
+          );
+          grid.scrollTop = 0;
+          return;
+        }
+
+        const fragment = document.createDocumentFragment();
+        list.forEach(function (plugin) {
+          fragment.appendChild(createCard(plugin));
+        });
+
+        grid.replaceChildren(fragment);
+        grid.setAttribute('data-state', 'ready');
+        grid.scrollTop = 0;
+      }
+
+      function activateGroup(key) {
+        if (!state.groupMap.has(key)) {
+          return;
+        }
+
+        state.activeKey = key;
+        updateTabSelection(key);
+        const group = state.groupMap.get(key);
+        renderPluginList(group.plugins);
       }
 
       function createCard(entry) {
@@ -814,6 +1058,12 @@
       loadCatalog()
         .then(function (plugins) {
           if (!Array.isArray(plugins) || plugins.length === 0) {
+            state.groups = [];
+            state.groupMap = new Map();
+            state.activeKey = null;
+            if (tabContainer) {
+              tabContainer.setAttribute('hidden', 'true');
+            }
             grid.setAttribute('data-state', 'empty');
             grid.innerHTML = '';
             grid.appendChild(createCard({
@@ -822,15 +1072,28 @@
             }));
             return;
           }
-          const fragment = document.createDocumentFragment();
-          plugins.forEach(function (plugin) {
-            fragment.appendChild(createCard(plugin));
-          });
-          grid.replaceChildren(fragment);
-          grid.setAttribute('data-state', 'ready');
+          const { groups, map } = createPluginGroups(plugins);
+          state.groups = groups;
+          state.groupMap = map;
+          state.activeKey = null;
+
+          renderTabs(groups);
+
+          const initialGroup = groups.length ? groups[0] : null;
+          if (initialGroup) {
+            activateGroup(initialGroup.key);
+          } else {
+            renderPluginList([]);
+          }
         })
         .catch(function (error) {
           console.warn('Dynamic plugin catalog update failed', error);
+          state.groups = [];
+          state.groupMap = new Map();
+          state.activeKey = null;
+          if (tabContainer) {
+            tabContainer.setAttribute('hidden', 'true');
+          }
           grid.setAttribute('data-state', 'error');
           grid.innerHTML = '';
           grid.appendChild(createCard({

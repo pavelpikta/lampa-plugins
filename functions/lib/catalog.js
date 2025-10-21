@@ -159,7 +159,11 @@ function normalizeEntry(item) {
   }
 
   const name = item.name.trim();
-  if (!name || !name.endsWith('.js')) {
+  if (!name) {
+    return null;
+  }
+
+  if (!isAllowedPluginName(name)) {
     return null;
   }
 
@@ -175,6 +179,23 @@ function normalizeEntry(item) {
     version:
       typeof item.version === 'string' && item.version.trim() ? item.version : defaultVersion,
   };
+}
+
+function isAllowedPluginName(name) {
+  if (name.endsWith('.js')) {
+    return true;
+  }
+
+  if (!name.includes('.')) {
+    return true;
+  }
+
+  if (name.includes('/')) {
+    const lastSegment = name.split('/').pop();
+    return lastSegment ? !lastSegment.includes('.') : false;
+  }
+
+  return false;
 }
 
 function formatLabelFromName(name) {

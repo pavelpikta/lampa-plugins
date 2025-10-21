@@ -1,3 +1,4 @@
+import babelParser from '@babel/eslint-parser';
 import js from '@eslint/js';
 import globals from 'globals';
 
@@ -9,11 +10,13 @@ export default [
   {
     files: ['functions/**/*.js'],
     languageOptions: {
+      parser: babelParser,
       ecmaVersion: 'latest',
       sourceType: 'module',
       parserOptions: {
-        ecmaFeatures: {
-          importAssertions: true,
+        requireConfigFile: false,
+        babelOptions: {
+          plugins: ['@babel/plugin-syntax-import-assertions'],
         },
       },
       globals: {
