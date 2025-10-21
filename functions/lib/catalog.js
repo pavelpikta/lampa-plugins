@@ -1,4 +1,4 @@
-import fallbackCatalogSource from '../../plugins/catalog.json' with { type: 'json' };
+import fallbackCatalogSource from '../../plugins/catalog.json' assert { type: 'json' };
 
 const INTERNAL_ORIGIN = 'https://lampa-plugins.internal';
 const CATALOG_ASSET = '/catalog.json';
