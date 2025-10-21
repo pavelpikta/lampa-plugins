@@ -5,6 +5,7 @@ const CATALOG_ASSET = '/catalog.json';
 const pluginDescriptions = {
   'cubrip.js': 'Cubrip integration helpers',
   'devsecops.js': 'DevSecOps tooling presets',
+  'etor.js': 'Enable torrents feature',
   'interface_mod.js': 'Interface tweaks and customization pack',
   'notrailers.js': 'Content filtering utilities',
   'parsers.js': 'Parser extensions for feeds',
@@ -15,6 +16,7 @@ const pluginDescriptions = {
 const pluginLabels = {
   cubrip: 'Cubrip',
   devsecops: 'DevSecOps',
+  etor: 'Enable Torrents',
   interface_mod: 'Interface Mod',
   notrailers: 'No Trailers',
   parsers: 'Parsers Suite',

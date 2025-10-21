@@ -8,6 +8,11 @@
     "description": "DevSecOps tooling presets (parsers, torrserver, screensaver, etc)"
   },
   {
+    "name": "etor.js",
+    "label": "Enable Torrents",
+    "description": "Enable torrents feature"
+  },
+  {
     "name": "interface_mod.js",
     "description": "Interface tweaks and customization pack"
   },
