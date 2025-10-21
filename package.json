@@ -1,0 +1,30 @@
+{
+  "name": "lampa-plugins",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "generate:manifest": "node scripts/generate-plugin-manifest.mjs",
+    "build": "npm run generate:manifest",
+    "clean": "rimraf plugins/plugin-manifest.json .wrangler",
+    "dev": "wrangler pages dev --port 5050",
+    "dev:build": "npm run build && npm run dev",
+    "deploy": "wrangler pages deploy",
+    "lint": "eslint functions scripts --ext .js,.mjs --max-warnings=0",
+    "lint:fix": "npm run lint -- --fix",
+    "format": "prettier --check .",
+    "format:check": "npm run format",
+    "format:fix": "prettier --write .",
+    "check": "npm run format && npm run lint",
+    "check:fix": "npm run format:fix && npm run lint:fix",
+    "ci": "npm ci && npm run check"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.38.0",
+    "eslint": "^9.38.0",
+    "globals": "^16.4.0",
+    "prettier": "^3.6.2",
+    "rimraf": "^6.0.1",
+    "wrangler": "^4.44.0"
+  }
+}

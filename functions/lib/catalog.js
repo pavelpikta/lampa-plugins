@@ -1,4 +1,4 @@
-import fallbackCatalogSource from '../../plugins/catalog.json' assert { type: 'json' };
+import fallbackCatalogSource from '../../plugins/catalog.json' with { type: 'json' };
 
 const INTERNAL_ORIGIN = 'https://lampa-plugins.internal';
 const CATALOG_ASSET = '/catalog.json';
@@ -8,7 +8,7 @@ const defaultVersion = '1.0.0';
 const fallbackCatalog = normalizeCatalog(fallbackCatalogSource);
 const jsonHeaders = {
   'Content-Type': 'application/json; charset=utf-8',
-  'Cache-Control': 's-maxage=600, stale-while-revalidate=86400'
+  'Cache-Control': 's-maxage=600, stale-while-revalidate=86400',
 };
 
 export async function generateCatalogResponse(context) {
@@ -38,7 +38,7 @@ export async function generateCatalogResponse(context) {
   }
 
   const response = new Response(JSON.stringify(plugins), {
-    headers: { ...jsonHeaders, 'X-Data-Source': dataSource, 'X-Build-Id': buildId }
+    headers: { ...jsonHeaders, 'X-Data-Source': dataSource, 'X-Build-Id': buildId },
   });
 
   if (typeof context.waitUntil === 'function') {
@@ -75,7 +75,7 @@ async function loadCatalogFromAssets(env) {
 
   try {
     const request = new Request(`${INTERNAL_ORIGIN}${CATALOG_ASSET}`, {
-      headers: { Accept: 'application/json' }
+      headers: { Accept: 'application/json' },
     });
     const response = await env.ASSETS.fetch(request);
 
@@ -104,7 +104,10 @@ async function loadCatalogFromAssets(env) {
           label: item.label || (fallback && fallback.label) || formatLabel(item.name),
           href: item.href || (fallback && fallback.href) || `/${item.name}`,
           description: item.description || (fallback && fallback.description) || defaultDescription,
-          version: typeof item.version === 'string' ? item.version : (fallback && fallback.version) || defaultVersion
+          version:
+            typeof item.version === 'string'
+              ? item.version
+              : (fallback && fallback.version) || defaultVersion,
         };
       })
       .sort((a, b) => a.name.localeCompare(b.name));
@@ -162,14 +165,15 @@ function normalizeEntry(item) {
 
   return {
     name,
-    label: typeof item.label === 'string' && item.label.trim() ? item.label : formatLabelFromName(name),
+    label:
+      typeof item.label === 'string' && item.label.trim() ? item.label : formatLabelFromName(name),
     href: typeof item.href === 'string' && item.href.trim() ? item.href : `/${name}`,
     description:
       typeof item.description === 'string' && item.description.trim()
         ? item.description
         : defaultDescription,
     version:
-      typeof item.version === 'string' && item.version.trim() ? item.version : defaultVersion
+      typeof item.version === 'string' && item.version.trim() ? item.version : defaultVersion,
   };
 }
 

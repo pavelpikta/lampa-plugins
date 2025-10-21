@@ -184,3 +184,6 @@ dist
 .env*
 !.env.example
 .wrangler/
+
+# Generated at build time
+plugins/plugin-manifest.json

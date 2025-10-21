@@ -1,22 +1,20 @@
-import fallbackCatalogSource from '../../plugins/catalog.json' assert { type: 'json' };
+import fallbackCatalogSource from '../../plugins/catalog.json' with { type: 'json' };
 
-const INTERNAL_ORIGIN = 'https://lampa-plugins.internal';
-const MANIFEST_ASSET_PATHS = ['/__STATIC_CONTENT_MANIFEST', '/_manifest.json', '/asset-manifest.json'];
+const DEFAULT_INTERNAL_ORIGIN = 'https://lampa-plugins.internal';
+const PLUGIN_MANIFEST_PATHS = ['/plugin-manifest.json', '/plugins/plugin-manifest.json'];
 const jsonHeaders = {
   'Content-Type': 'application/json; charset=utf-8',
-  'Cache-Control': 's-maxage=300, stale-while-revalidate=600'
+  'Cache-Control': 's-maxage=300, stale-while-revalidate=600',
 };
 const defaultDescription = 'Not provided';
-const defaultVersion = '1.0.0';
+const defaultVersion = '0.0.0';
 
 const fallbackCatalog = normalizeCatalog(fallbackCatalogSource);
-const fallbackMap = new Map(fallbackCatalog.map((item) => [item.name, item]));
-const fallbackLowercaseMap = new Map(fallbackCatalog.map((item) => [item.name.toLowerCase(), item.name]));
-
 export async function generateCatalogResponse(context) {
   const { env } = context || {};
   const buildId = (env && env.CF_PAGES_COMMIT_SHA) || 'local-dev';
-  const cacheKey = new Request(`${INTERNAL_ORIGIN}/api/plugins/dynamic?build=${buildId}`);
+  const origin = resolveRequestOrigin(context);
+  const cacheKey = new Request(`${origin}/api/plugins/dynamic?build=${buildId}`);
   const cache = typeof caches !== 'undefined' ? caches.default : null;
 
   if (cache) {
@@ -30,19 +28,26 @@ export async function generateCatalogResponse(context) {
   let plugins = fallbackList;
   let dataSource = 'fallback';
 
-  const discovered = await discoverPlugins(context);
+  const discovery = await discoverPlugins(context);
+  const discovered = Array.isArray(discovery.plugins) ? discovery.plugins : [];
   const merged = mergeCatalogSources({ fallbackList, assetCatalog: discovered });
 
   if (merged.length) {
     plugins = merged;
   }
 
-  if (discovered.length) {
-    dataSource = 'asset-scan';
+  if (discovered.length && discovery.source) {
+    dataSource = discovery.source;
   }
 
+  const responseHeaders = {
+    ...jsonHeaders,
+    'X-Data-Source': dataSource,
+    'X-Build-Id': buildId,
+  };
+
   const response = new Response(JSON.stringify(plugins), {
-    headers: { ...jsonHeaders, 'X-Data-Source': dataSource, 'X-Build-Id': buildId }
+    headers: responseHeaders,
   });
 
   if (cache && typeof context.waitUntil === 'function') {
@@ -53,76 +58,26 @@ export async function generateCatalogResponse(context) {
 }
 
 async function discoverPlugins(context) {
-  const manifestPaths = await loadManifestPaths(context);
-  if (!manifestPaths.length) {
-    return [];
+  const generated = await loadGeneratedManifest(context);
+  if (Array.isArray(generated) && generated.length) {
+    return { plugins: generated, source: 'generated-manifest' };
   }
 
-  const names = Array.from(
-    new Set(
-      manifestPaths
-        .map(normalizeAssetPath)
-        .map(sanitizePluginName)
-        .map(resolvePreferredName)
-        .filter((name) => name && !shouldIgnoreAsset(name))
-    )
-  );
-
-  return names.map((name) => {
-    const fallback = getFallbackEntry(name);
-    return fallback ? { ...fallback } : { name };
-  });
+  return { plugins: [], source: null };
 }
 
-async function loadManifestPaths(context) {
-  const candidates = collectManifestCandidates(context);
-
-  for (const candidate of candidates) {
-    const parsed = parseManifestCandidate(candidate);
-    if (parsed.length) {
-      return parsed;
-    }
-  }
-
-  const fetched = await fetchManifestFromAssets(context);
-  if (fetched.length) {
-    return fetched;
-  }
-
-  return [];
-}
-
-function collectManifestCandidates(context) {
-  const { env } = context || {};
-  const candidates = [];
-
-  if (env) {
-    if (typeof env.ASSET_MANIFEST !== 'undefined') {
-      candidates.push(env.ASSET_MANIFEST);
-    }
-
-    if (typeof env.__STATIC_CONTENT_MANIFEST !== 'undefined') {
-      candidates.push(env.__STATIC_CONTENT_MANIFEST);
-    }
-  }
-
-  if (typeof __STATIC_CONTENT_MANIFEST !== 'undefined') {
-    candidates.push(__STATIC_CONTENT_MANIFEST);
-  }
-
-  return candidates;
-}
-
-async function fetchManifestFromAssets(context) {
+async function loadGeneratedManifest(context) {
   const { env } = context || {};
   if (!env || !env.ASSETS || typeof env.ASSETS.fetch !== 'function') {
-    return [];
+    return null;
   }
 
-  for (const path of MANIFEST_ASSET_PATHS) {
+  const origin = resolveRequestOrigin(context);
+
+  for (const path of PLUGIN_MANIFEST_PATHS) {
     try {
-      const request = new Request(`${INTERNAL_ORIGIN}${path}`, {
-        headers: { Accept: 'application/json, text/plain;q=0.9' }
+      const request = new Request(buildAssetUrl(origin, path), {
+        headers: { Accept: 'application/json, text/plain;q=0.9' },
       });
       const response = await env.ASSETS.fetch(request);
 
@@ -131,204 +86,22 @@ async function fetchManifestFromAssets(context) {
       }
 
       const contentType = response.headers.get('content-type') || '';
-      const payload = contentType.includes('application/json')
-        ? await response.json()
-        : await response.text();
-      const parsed = parseManifestCandidate(payload);
+      if (!contentType.includes('application/json')) {
+        continue;
+      }
 
-      if (parsed.length) {
-        return parsed;
+      const payload = await response.json();
+      const plugins = normalizeGeneratedManifest(payload);
+
+      if (plugins.length) {
+        return plugins;
       }
     } catch (error) {
-      console.warn('Failed to fetch asset manifest candidate', path, error);
+      console.warn('Failed to fetch generated plugin manifest', path, error);
     }
   }
 
-  return [];
-}
-
-function parseManifestCandidate(candidate) {
-  if (!candidate) {
-    return [];
-  }
-
-  if (typeof Response !== 'undefined' && candidate instanceof Response) {
-    return [];
-  }
-
-  if (candidate instanceof ArrayBuffer) {
-    const decoded = new TextDecoder().decode(candidate);
-    return parseManifestCandidate(decoded);
-  }
-
-  if (ArrayBuffer.isView(candidate)) {
-    const decoded = new TextDecoder().decode(candidate);
-    return parseManifestCandidate(decoded);
-  }
-
-  let manifest = candidate;
-
-  if (typeof candidate === 'string') {
-    const trimmed = candidate.trim();
-    if (!trimmed) {
-      return [];
-    }
-
-    try {
-      manifest = JSON.parse(trimmed);
-    } catch (error) {
-      return [];
-    }
-  }
-
-  if (!manifest || typeof manifest !== 'object') {
-    return [];
-  }
-
-  const results = new Set();
-  const visited = new WeakSet();
-
-  function visit(value, depth = 0) {
-    if (!value || depth > 6) {
-      return;
-    }
-
-    if (typeof value === 'string') {
-      const normalized = value.trim();
-      if (normalized) {
-        results.add(normalized);
-      }
-      return;
-    }
-
-    if (Array.isArray(value)) {
-      for (const item of value) {
-        visit(item, depth + 1);
-      }
-      return;
-    }
-
-    if (typeof value === 'object') {
-      if (visited.has(value)) {
-        return;
-      }
-
-      visited.add(value);
-
-      for (const [key, entry] of Object.entries(value)) {
-        if (typeof key === 'string' && key.trim()) {
-          results.add(key.trim());
-        }
-
-        visit(entry, depth + 1);
-      }
-    }
-  }
-
-  if (manifest instanceof Map) {
-    for (const [key, value] of manifest.entries()) {
-      if (typeof key === 'string' && key.trim()) {
-        results.add(key.trim());
-      }
-      visit(value, 1);
-    }
-
-    return Array.from(results);
-  }
-
-  if (manifest instanceof Set) {
-    for (const value of manifest.values()) {
-      visit(value, 1);
-    }
-
-    return Array.from(results);
-  }
-
-  visit(manifest);
-
-  return Array.from(results);
-}
-
-function normalizeAssetPath(value) {
-  if (typeof value !== 'string') {
-    return null;
-  }
-
-  let normalized = value.trim();
-  if (!normalized) {
-    return null;
-  }
-
-  normalized = normalized.split(/[?#]/)[0];
-  normalized = normalized.replace(/^\.\//, '');
-  normalized = normalized.replace(/^\/+/g, '');
-  normalized = normalized.replace(/\\+/g, '/');
-
-  if (normalized.startsWith('plugins/')) {
-    normalized = normalized.slice('plugins/'.length);
-  }
-
-  return normalized;
-}
-
-function sanitizePluginName(value) {
-  if (!value) {
-    return value;
-  }
-
-  const hashedPattern = /(\.[0-9a-f]{6,})+\.js$/i;
-
-  if (hashedPattern.test(value)) {
-    return value.replace(hashedPattern, '.js');
-  }
-
-  return value;
-}
-
-function resolvePreferredName(value) {
-  if (!value) {
-    return value;
-  }
-
-  if (fallbackMap.has(value)) {
-    return value;
-  }
-
-  const lower = value.toLowerCase();
-  const lowerMatch = fallbackLowercaseMap.get(lower);
-  if (lowerMatch) {
-    return lowerMatch;
-  }
-
-  const lastSlash = value.lastIndexOf('/');
-  if (lastSlash !== -1) {
-    const base = value.slice(lastSlash + 1);
-    if (fallbackMap.has(base)) {
-      return base;
-    }
-
-    const baseLower = base.toLowerCase();
-    const baseMatch = fallbackLowercaseMap.get(baseLower);
-    if (baseMatch) {
-      return baseMatch;
-    }
-  }
-
-  return value;
-}
-
-function shouldIgnoreAsset(name) {
-  if (!name || !name.endsWith('.js')) {
-    return true;
-  }
-
-  const lower = name.toLowerCase();
-  if (lower === '_worker.js' || lower.endsWith('.map.js') || lower.startsWith('api/')) {
-    return true;
-  }
-
-  const segments = name.split('/');
-  return segments.some((segment) => segment.startsWith('_') || segment === '' || segment === '.');
+  return null;
 }
 
 function buildFallbackList() {
@@ -336,10 +109,6 @@ function buildFallbackList() {
     .slice()
     .sort((a, b) => a.name.localeCompare(b.name))
     .map((item) => ({ ...item }));
-}
-
-function getFallbackEntry(name) {
-  return fallbackMap.get(name) || null;
 }
 
 function normalizeCatalog(items) {
@@ -391,21 +160,14 @@ function normalizeEntry(item) {
   return {
     name,
     label:
-      typeof item.label === 'string' && item.label.trim()
-        ? item.label
-        : formatLabelFromName(name),
-    href:
-      typeof item.href === 'string' && item.href.trim()
-        ? item.href
-        : `/${name}`,
+      typeof item.label === 'string' && item.label.trim() ? item.label : formatLabelFromName(name),
+    href: typeof item.href === 'string' && item.href.trim() ? item.href : `/${name}`,
     description:
       typeof item.description === 'string' && item.description.trim()
         ? item.description
         : defaultDescription,
     version:
-      typeof item.version === 'string' && item.version.trim()
-        ? item.version
-        : defaultVersion
+      typeof item.version === 'string' && item.version.trim() ? item.version : defaultVersion,
   };
 }
 
@@ -417,4 +179,58 @@ function formatLabelFromName(name) {
     .filter(Boolean)
     .map((segment) => segment.charAt(0).toUpperCase() + segment.slice(1))
     .join(' ');
+}
+
+function normalizeGeneratedManifest(payload) {
+  const items = Array.isArray(payload)
+    ? payload
+    : payload && typeof payload === 'object' && Array.isArray(payload.plugins)
+      ? payload.plugins
+      : [];
+
+  const results = [];
+  const seen = new Set();
+
+  for (const item of items) {
+    const candidate = typeof item === 'string' ? { name: item } : item;
+    const normalized = normalizeEntry(candidate);
+    if (!normalized || seen.has(normalized.name)) {
+      continue;
+    }
+
+    seen.add(normalized.name);
+    results.push(normalized);
+  }
+
+  return results;
+}
+
+function buildAssetUrl(origin, assetPath) {
+  if (!assetPath) {
+    return origin;
+  }
+
+  try {
+    return new URL(assetPath, origin).toString();
+  } catch {
+    const base = origin.endsWith('/') ? origin.slice(0, -1) : origin;
+    const path = assetPath.startsWith('/') ? assetPath : `/${assetPath}`;
+    return `${base}${path}`;
+  }
+}
+
+function resolveRequestOrigin(context) {
+  const request = context && context.request;
+  if (request && typeof request.url === 'string') {
+    try {
+      const url = new URL(request.url);
+      if (url && url.origin) {
+        return url.origin;
+      }
+    } catch {
+      // Ignore malformed URLs and fallback to the default origin
+    }
+  }
+
+  return DEFAULT_INTERNAL_ORIGIN;
 }
