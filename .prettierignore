@@ -1,2 +1,3 @@
 plugins/plugin-manifest.json
 plugins/**
+.github/**
